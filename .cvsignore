@@ -6,3 +6,5 @@ tls+ipv6-1.25-pf-2.1.4.patch.gz
 postfix-2.1.5.tar.gz
 ipv6-1.25-pf-2.1.5.patch.gz
 tls+ipv6-1.25-pf-2.1.5.patch.gz
+ipv6-1.26-pf-2.1.5.patch.gz
+tls+ipv6-1.26-pf-2.1.5.patch.gz

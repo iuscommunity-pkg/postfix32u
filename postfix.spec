@@ -44,7 +44,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.1.5
-Release: 4.1
+Release: 5.1
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -88,8 +88,8 @@ Source3: README-Postfix-SASL-RedHat.txt
 # original Source50 patch and doc.
 
 Source50: ftp://ftp.aet.tu-cottbus.de/pub/postfix_tls/%{tlsno}.tar.gz
-Source51: ftp://ftp.stack.nl/pub/postfix/tls+ipv6/1.25/tls+ipv6-1.25-pf-2.1.5.patch.gz
-Source52: ftp://ftp.stack.nl/pub/postfix/tls+ipv6/1.25/ipv6-1.25-pf-2.1.5.patch.gz
+Source51: ftp://ftp.stack.nl/pub/postfix/tls+ipv6/1.26/tls+ipv6-1.26-pf-2.1.5.patch.gz
+Source52: ftp://ftp.stack.nl/pub/postfix/tls+ipv6/1.26/ipv6-1.26-pf-2.1.5.patch.gz
 %if %{PFLOGSUMM}
 Source53: http://jimsun.linxnet.com/downloads/pflogsumm-%{pflogsumm_ver}.tar.gz
 %endif
@@ -490,6 +490,7 @@ exit 0
 %doc %attr(0644, root, root) %{postfix_sample_dir}/*
 %dir %attr(0755, root, root) %{postfix_doc_dir}/TLS
 %doc %attr(0644, root, root) %{postfix_doc_dir}/TLS/*
+%dir %attr(0755, root, root) %{postfix_doc_dir}/TLS/contributed
 
 %dir %attr(0755, root, root) %{postfix_config_dir}
 %dir %attr(0755, root, root) %{postfix_daemon_dir}
@@ -555,6 +556,11 @@ exit 0
 
 
 %changelog
+* Fri Feb 11 2005 Thomas Woerner <twoerner@redhat.com> 2:2.1.5-5.1
+- fixed open relay bug in postfix ipv6 patch: new version 1.26 (#146731)
+- fixed permissions on doc directory (#147280)
+- integrated fixed fqdn patch from Joseph Dunn (#139983)
+
 * Tue Nov 23 2004 Thomas Woerner <twoerner@redhat.com> 2:2.1.5-4.1
 - removed double quotes from postalias call, second fix for #138354
 
