@@ -4,15 +4,15 @@
 %define LDAP 0
 %define MYSQL 0
 %define PCRE 1
-%define SASL 0
+%define SASL 1
 %define TLS 1
 %define SMTPD_MULTILINE_GREETING 1
 %define POSTDROP_GID 90
 
 # If set to 1 if official version, 0 if snapshot
 %define official 1 
-%define ver 1.1.7
-%define releasedate 20020115
+%define ver 1.1.11
+%define releasedate 20020624
 %define alternatives 1
 %if %{official}
 Version: %{ver}
@@ -22,7 +22,7 @@ Version: %{ver}-%{releasedate}
 %define ftp_directory experimental
 %endif
 
-%define tlsno pfixtls-0.8.7-1.1.7-0.9.6c
+%define tlsno pfixtls-0.8.11a-1.1.11-0.9.6d
 
 # Postfix requires one exlusive uid/gid and a 2nd exclusive gid for its own
 # use.  Let me know if the second gid collides with another package.
@@ -45,17 +45,20 @@ Obsoletes: sendmail exim qmail
 %endif
 PreReq: %{_sbindir}/groupadd, %{_sbindir}/useradd
 Epoch: 2
-Provides: MTA smtpd smtpdaemon
-Release: 2
+Provides: MTA smtpd smtpdaemon /usr/bin/newaliases
+Release: 4
 Summary: Postfix Mail Transport Agent
 Source0: ftp://ftp.porcupine.org/mirrors/postfix-release/%{ftp_directory}/%{name}-%{version}.tar.bz2
 Source3: postfix-etc-init.d-postfix
 Source5: postfix-aliases
 Source6: postfix-chroot-setup.awk
 Source9: ftp://ftp.aet.tu-cottbus.de/pub/postfix_tls/%{tlsno}.tar.bz2
+Source10: postfix-smtpd.conf
+Source11: README-Postifx-SASL-RedHat.txt
 Patch1: postfix-config.patch
 Patch2: postfix-smtp_sasl_proto.c.patch
 Patch3: postfix-alternatives.patch
+Patch4: postfix-1.1.4-sasl2-patch
 
 # Optional patches - set the appropriate environment variables to include
 #                    them when building the package/spec file
@@ -66,7 +69,7 @@ Patch99: postfix-smtpd_multiline_greeting.patch
 BuildRoot: %{_tmppath}/%{name}-buildroot
 
 # Determine the different packages required for building postfix
-BuildRequires: gawk, perl, sed, ed, db3-devel
+BuildRequires: gawk, perl, sed, ed, db4-devel
 
 %if %{LDAP}
 BuildRequires: openldap >= 1.2.9, openldap-devel >= 1.2.9
@@ -113,6 +116,9 @@ patch -p1 <%{tlsno}/pfixtls.diff
 %if %alternatives
 %patch3 -p1 -b .alternatives
 %endif
+
+# Apply the SASL2 patch to make postfix work correctly with SASL2.
+%patch4 -p1 -b .sasl2
 
 # Apply optional patches
 
@@ -192,7 +198,7 @@ sh postfix-install -non-interactive \
        setgid_group=%{maildrop_group} \
        manpage_directory=%{_mandir} \
        sample_directory=/samples \
-       readme_directory=%{_sysconfdir}/postfix/README_FILES || exit 1
+       readme_directory=%{_docdir}/%{name}-%{version}/README_FILES || exit 1
 
 rm -fr ./samples
 mv $RPM_BUILD_ROOT/samples .
@@ -245,6 +251,24 @@ w
 q
 EOF
 
+# Install the smtpd.conf file for SASL support.
+mkdir -p $RPM_BUILD_ROOT%{_libdir}/sasl
+install -m 644 %SOURCE10 $RPM_BUILD_ROOT%{_libdir}/sasl/smtpd.conf
+
+# Install Postfix Red Hat HOWTO.
+cp %{SOURCE11} .
+
+# remove LICENSE file from /etc/postfix (it's still in docdir)
+rm -f $RPM_BUILD_ROOT%{_sysconfdir}/postfix/LICENSE ||:
+ed $RPM_BUILD_ROOT%{_sysconfdir}/postfix/postfix-files <<EOF || exit 1
+g/LICENSE/d
+w
+q
+EOF
+
+# fix path to perl
+perl -pi -e "s,/usr/local/bin/perl,/usr/bin/perl,g" html/TLS/loadCAcert.pl
+
 %post
 umask 022
 
@@ -259,7 +283,7 @@ sh %{_sysconfdir}/postfix/post-install \
 	setgid_group=%{maildrop_group} \
 	manpage_directory=%{_mandir} \
 	sample_directory=%{_docdir}/%{name}-%{version}/samples \
-	readme_directory=%{_sysconfdir}/postfix/README_FILES \
+	readme_directory=%{_docdir}/%{name}-%{version}/README_FILES \
 	upgrade-package
 
 # setup chroot config
@@ -306,10 +330,10 @@ rm -f %{ROOT}/etc/services
 %{copy_cmd}
 copy /etc/services %{ROOT}/etc
 
-# Put db3 in the chroot jail, but only if the soname is correct
-%triggerin -- db3
+# Put db4 in the chroot jail, but only if the soname is correct
+%triggerin -- db4
 %{copy_cmd}
-DBVER=`ldd %{_libexecdir}/postfix/pickup |grep libdb |perl -pi -e "s,\s+,,g;s,=>.*,,"`
+DBVER=`ldd %{_libexecdir}/postfix/pickup |grep libdb |sed "s,[[:blank:]],,g;s,=>.*,,"`
 if [ -e "/lib/$DBVER" ]; then
 	copy "/lib/$DBVER" %{ROOT}/lib
 fi
@@ -319,7 +343,7 @@ fi
 %{_sbindir}/groupadd -g %{maildrop_gid} -r %{maildrop_group} 2>/dev/null || :
 %{_sbindir}/groupadd -g %{postfix_gid} -r postfix 2>/dev/null || :
 %{_sbindir}/groupadd -g 12 -r mail 2>/dev/null || :
-%{_sbindir}/useradd -d %{_var}/spool/postfix -s /bin/true -g postfix -G mail -M -r -u %{postfix_uid} postfix 2>/dev/null || :
+%{_sbindir}/useradd -d %{_var}/spool/postfix -s /sbin/nologin -g postfix -G mail -M -r -u %{postfix_uid} postfix 2>/dev/null || :
 
 %preun
 umask 022
@@ -368,7 +392,7 @@ if [ "$1" = 0 ]; then
 fi
 
 # Remove unneeded symbolic links
-for i in samples README_FILES; do
+for i in samples; do
   test -L %{_sysconfdir}/postfix/$i && rm %{_sysconfdir}/postfix/$i || true
 done
 
@@ -385,7 +409,6 @@ exit 0
 %files
 %defattr(-, root, root)
 %verify(not md5 size mtime) %config %dir %{_sysconfdir}/postfix
-%attr(0644, root, root)         %{_sysconfdir}/postfix/LICENSE
 %attr(0755, root, root) %config %{_sysconfdir}/postfix/postfix-script
 %attr(0755, root, root) %config %{_sysconfdir}/postfix/post-install
 %attr(0644, root, root)                                                %{_sysconfdir}/postfix/postfix-files
@@ -402,8 +425,8 @@ exit 0
 %attr(0644, root, root) %verify(not md5 size mtime) %config(noreplace) %{_sysconfdir}/postfix/transport
 %attr(0644, root, root) %verify(not md5 size mtime) %config(noreplace) %{_sysconfdir}/postfix/virtual
 
-%dir %attr(-, root, root) %{_sysconfdir}/postfix/README_FILES
-%attr(0644,   root, root) %{_sysconfdir}/postfix/README_FILES/*
+#%dir %attr(-, root, root) %{_sysconfdir}/postfix/README_FILES
+#%attr(0644,   root, root) %{_sysconfdir}/postfix/README_FILES/*
 
 %attr(0755, root, root) %config /etc/rc.d/init.d/postfix
 
@@ -428,12 +451,15 @@ exit 0
 
 %dir %attr(0755, root, root)        %verify(not md5 size mtime) %{_var}/spool/postfix/pid
 
-%doc 0README COMPATIBILITY HISTORY INSTALL LICENSE PORTING RELEASE_NOTES
+%doc 0README COMPATIBILITY HISTORY INSTALL LICENSE PORTING RELEASE_NOTES README-Postifx-SASL-RedHat.txt
 %if %{TLS}
 %doc ACKNOWLEDGEMENTS.TLS CHANGES.TLS README.TLS TODO.TLS html/TLS/*
 %endif
 %doc html
 %doc samples
+%doc README_FILES
+
+%{_libdir}/sasl/smtpd.conf
 
 %dir %attr(0755, root, root) %verify(not md5 size mtime) %{_libexecdir}/postfix
 %{_libexecdir}/postfix/bounce
@@ -482,6 +508,36 @@ exit 0
 %{_mandir}/*/*
 
 %changelog
+* Tue Jul 23 2002 Karsten Hopp <karsten@redhat.de>
+- postfix has its own filelist, remove LICENSE entry from it (#69069)
+
+* Tue Jul 16 2002 Karsten Hopp <karsten@redhat.de>
+- fix shell in /etc/passwd (#68373)
+- fix documentation in /etc/postfix (#65858)
+- Provides: /usr/bin/newaliases (#66746)
+- fix autorequires by changing /usr/local/bin/perl to /usr/bin/perl in a
+  script in %%doc (#68852), although I don't think this is necessary anymore
+
+* Mon Jul 15 2002 Phil Knirsch <pknirsch@redhat.com>
+- Fixed missing smtpd.conf file for SASL support and included SASL Postfix
+  Red Hat HOWTO (#62505).
+- Included SASL2 support patch (#68800).
+
+* Mon Jun 24 2002 Karsten Hopp <karsten@redhat.de>
+- 1.1.11, TLS 0.8.11a
+- fix #66219 and #66233 (perl required for %%post)
+
+* Fri Jun 21 2002 Tim Powers <timp@redhat.com>
+- automated rebuild
+
+* Sun May 26 2002 Tim Powers <timp@redhat.com>
+- automated rebuild
+
+* Thu May 23 2002 Bernhard Rosenkraenzer <bero@redhat.com> 1.1.10-1
+- 1.1.10, TLS 0.8.10
+- Build with db4
+- Enable SASL
+
 * Mon Apr 15 2002 Bernhard Rosenkraenzer <bero@redhat.com> 1.1.7-2
 - Fix bugs #62358 and #62783
 - Make sure libdb-3.3.so is in the chroot jail (#62906)
