@@ -1,0 +1,53 @@
+--- postfix-2.1.1/conf/main.cf.config	2004-04-15 15:27:21.000000000 +0200
++++ postfix-2.1.1/conf/main.cf	2004-05-24 17:48:09.621348587 +0200
+@@ -106,6 +106,7 @@
+ #inet_interfaces = all
+ #inet_interfaces = $myhostname
+ #inet_interfaces = $myhostname, localhost
++inet_interfaces = localhost
+ 
+ # The proxy_interfaces parameter specifies the network interface
+ # addresses that this mail system receives mail on by way of a
+@@ -150,7 +151,7 @@
+ #
+ # See also below, section "REJECTING MAIL FOR UNKNOWN LOCAL USERS".
+ #
+-#mydestination = $myhostname, localhost.$mydomain, localhost
++mydestination = $myhostname, localhost.$mydomain, localhost
+ #mydestination = $myhostname, localhost.$mydomain, localhost, $mydomain
+ #mydestination = $myhostname, localhost.$mydomain, localhost, $mydomain,
+ #	mail.$mydomain, www.$mydomain, ftp.$mydomain
+@@ -372,7 +373,7 @@
+ # "postfix reload" to eliminate the delay.
+ #
+ #alias_maps = dbm:/etc/aliases
+-#alias_maps = hash:/etc/aliases
++alias_maps = hash:/etc/aliases
+ #alias_maps = hash:/etc/aliases, nis:mail.aliases
+ #alias_maps = netinfo:/aliases
+ 
+--- postfix-2.1.1/conf/postfix-files.config	2004-05-24 17:29:30.002936514 +0200
++++ postfix-2.1.1/conf/postfix-files	2004-05-24 17:50:24.548253843 +0200
+@@ -118,8 +118,8 @@
+ $config_directory/postfix-script-sgid:f:root:-:755:o
+ $config_directory/postfix-script-nosgid:f:root:-:755:o
+ $config_directory/post-install:f:root:-:755
+-$manpage_directory/man1/mailq.1:f:root:-:644
+-$manpage_directory/man1/newaliases.1:f:root:-:644
++$manpage_directory/man1/mailq.postfix.1:f:root:-:644
++$manpage_directory/man1/newaliases.postfix.1:f:root:-:644
+ $manpage_directory/man1/postalias.1:f:root:-:644
+ $manpage_directory/man1/postcat.1:f:root:-:644
+ $manpage_directory/man1/postconf.1:f:root:-:644
+@@ -131,9 +131,9 @@
+ $manpage_directory/man1/postmap.1:f:root:-:644
+ $manpage_directory/man1/postqueue.1:f:root:-:644
+ $manpage_directory/man1/postsuper.1:f:root:-:644
+-$manpage_directory/man1/sendmail.1:f:root:-:644
++$manpage_directory/man1/sendmail.postfix.1:f:root:-:644
+ $manpage_directory/man5/access.5:f:root:-:644
+-$manpage_directory/man5/aliases.5:f:root:-:644
++$manpage_directory/man5/aliases.postfix.5:f:root:-:644
+ $manpage_directory/man5/body_checks.5:f:root:-:644
+ $manpage_directory/man5/canonical.5:f:root:-:644
+ $manpage_directory/man5/cidr_table.5:f:root:-:644
