@@ -47,7 +47,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.1.5
-Release: 1
+Release: 2
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -62,7 +62,6 @@ Provides: MTA smtpd smtpdaemon /usr/bin/newaliases
 
 Source0: ftp://ftp.porcupine.org/mirrors/postfix-release/official/%{name}-%{version}.tar.gz
 Source1: postfix-etc-init.d-postfix
-Source2: postfix-aliases
 Source3: README-Postfix-SASL-RedHat.txt
 
 # Sources 50-99 are upstream [patch] contributions
@@ -325,10 +324,10 @@ perl -pi -e "s,/usr/local/bin/perl,/usr/bin/perl,g" $RPM_BUILD_ROOT%{postfix_doc
 %endif
 
 # Change alias_maps and alias_database default directory to %{postfix_config_dir}
-bin/postconf -c $RPM_BUILD_ROOT%{postfix_config_dir} -e \
-	"alias_maps = hash:%{postfix_config_dir}/aliases" \
-	"alias_database = hash:%{postfix_config_dir}/aliases" \
-|| exit 1
+#bin/postconf -c $RPM_BUILD_ROOT%{postfix_config_dir} -e \
+#	"alias_maps = hash:/etc/aliases" \
+#	"alias_database = hash:/etc/aliases" \
+#|| exit 1
 
 # This installs into the /etc/rc.d/init.d directory
 /bin/mkdir -p $RPM_BUILD_ROOT/etc/rc.d/init.d
@@ -336,12 +335,6 @@ install -c %{_sourcedir}/postfix-etc-init.d-postfix \
                   $RPM_BUILD_ROOT/etc/rc.d/init.d/postfix
 
 install -c auxiliary/rmail/rmail $RPM_BUILD_ROOT%{_bindir}/rmail.postfix
-
-# copy new aliases files and generate a ghost aliases.db file
-cp -f %{_sourcedir}/postfix-aliases $RPM_BUILD_ROOT%{postfix_config_dir}/aliases
-chmod 644 $RPM_BUILD_ROOT%{postfix_config_dir}/aliases
-
-touch $RPM_BUILD_ROOT/%{postfix_config_dir}/aliases.db
 
 for i in active bounce corrupt defer deferred flush incoming private saved maildrop public pid saved trace; do
     mkdir -p $RPM_BUILD_ROOT%{postfix_queue_dir}/$i
@@ -399,6 +392,7 @@ mkdir -p $RPM_BUILD_ROOT%{postfix_sample_dir}
 	install -c conf/sample-tls.cf $RPM_BUILD_ROOT%{postfix_sample_dir}/sample-tls.cf
 %endif
 
+rm -f $RPM_BUILD_ROOT/etc/postfix/aliases
 
 mkdir -p $RPM_BUILD_ROOT/usr/lib
 pushd $RPM_BUILD_ROOT/usr/lib
@@ -480,7 +474,6 @@ exit 0
 %config(noreplace) %{sasl_v1_lib_dir}/smtpd.conf
 %config(noreplace) %{sasl_v2_lib_dir}/smtpd.conf
 %config(noreplace) %{_sysconfdir}/pam.d/smtp.postfix
-%config(noreplace) %verify(not md5 size mtime) %{postfix_config_dir}/aliases.db
 %attr(0755, root, root) %config /etc/rc.d/init.d/postfix
 
 # Misc files
@@ -538,7 +531,6 @@ exit 0
 %attr(0755, root, root) %{postfix_command_dir}/postsuper
 %attr(0644, root, root) %{postfix_config_dir}/LICENSE
 %attr(0644, root, root) %config(noreplace) %{postfix_config_dir}/access
-%attr(0644, root, root) %config(noreplace) %{postfix_config_dir}/aliases
 %attr(0644, root, root) %config(noreplace) %{postfix_config_dir}/canonical
 %attr(0644, root, root) %config(noreplace) %{postfix_config_dir}/header_checks
 %attr(0644, root, root) %config(noreplace) %{postfix_config_dir}/main.cf
@@ -566,6 +558,9 @@ exit 0
 
 
 %changelog
+* Thu Oct 14 2004 Thomas Woerner <twoerner@redhat.com> 2:2.1.5-2
+- switched over to system aliases file and database in /etc/ (#117661)
+
 * Mon Oct  4 2004 Thomas Woerner <twoerner@redhat.com> 2:2.1.5-1
 - new version 2.1.5
 - new ipv6 and tls+ipv6 patches: 1.25-pf-2.1.5
