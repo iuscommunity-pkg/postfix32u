@@ -32,7 +32,7 @@ Version: %{ver}
 Version: %{ver}.%{releasedate}
 %define ftp_directory experimental
 %endif
-Release: 2
+Release: 4
 Epoch: 2
 
 %define tlsno pfixtls-0.8.16-2.0.18-0.9.7c
@@ -237,7 +237,6 @@ gzip -dc %{SOURCE53} | tar xf -
 # pflogsumm subpackage
 %if %{PFLOGSUMM}
 %package pflogsumm
-Version: %{pflogsumm_ver}
 Group: System Environment/Daemons
 Summary: A Log Summarizer/Analyzer for the Postfix MTA
 Requires: perl-Date-Calc
@@ -675,6 +674,7 @@ exit 0
 
 %if %{PFLOGSUMM}
 %files pflogsumm
+%defattr(-, root, root)
     %doc  %{postfix_doc_dir}/pflogsumm-faq.txt
     %doc  %{_mandir}/man1/pflogsumm.1.gz
     %attr(0755, root , root) %{postfix_command_dir}/pflogsumm
@@ -682,6 +682,13 @@ exit 0
 
 
 %changelog
+* Wed Mar 31 2004 John Dennis <jdennis@redhat.com> 2:2.0.18-4
+- remove version from pflogsumm subpackage, it was resetting the
+  version used in the doc directory, fixes bug 119213
+
+* Tue Mar 30 2004 Bill Nottingham <notting@redhat.com> 2:2.0.18-3
+- add %%defattr for pflogsumm package
+
 * Tue Mar 16 2004 John Dennis <jdennis@finch.boston.redhat.com> 2:2.0.18-2
 - fix sendmail man page (again), make pflogsumm a subpackage
 
