@@ -47,7 +47,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.1.5
-Release: 2.1
+Release: 2.2
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -110,6 +110,7 @@ Patch3: postfix-alternatives.patch
 Patch4: postfix-hostname-fqdn.patch
 Patch5: postfix-2.1.1-pie.patch
 Patch6: postfix-2.1.1-obsolete.patch
+Patch7: postfix-2.1.5-aliases.patch
 
 # Optional patches - set the appropriate environment variables to include
 #                    them when building the package/spec file
@@ -211,6 +212,7 @@ patch --fuzz=3 -p1 -b -z .config < %{P:1}
 %patch4 -p1 -b .postfix-hostname-fqdn
 %patch5 -p1 -b .pie
 %patch6 -p1 -b .obsolete
+%patch7 -p1 -b .aliases
 
 %if %{PFLOGSUMM}
 gzip -dc %{SOURCE53} | tar xf -
@@ -325,12 +327,6 @@ done
 # fix path to perl
 perl -pi -e "s,/usr/local/bin/perl,/usr/bin/perl,g" $RPM_BUILD_ROOT%{postfix_doc_dir}/TLS/contributed/loadCAcert.pl
 %endif
-
-# Change alias_maps and alias_database default directory to %{postfix_config_dir}
-bin/postconf -c $RPM_BUILD_ROOT%{postfix_config_dir} -e \
-	"alias_maps = hash:/etc/aliases" \
-	"alias_database = hash:/etc/aliases" \
-|| exit 1
 
 # This installs into the /etc/rc.d/init.d directory
 /bin/mkdir -p $RPM_BUILD_ROOT/etc/rc.d/init.d
@@ -562,6 +558,10 @@ exit 0
 
 
 %changelog
+* Mon Oct 18 2004 Thomas Woerner <twoerner@redhat.com> 2:2.1.5-2.2
+- automated postalias call in init script
+- removed postconf call from spec file: moved changes into patch
+
 * Fri Oct 15 2004 Thomas Woerner <twoerner@redhat.com> 2:2.1.5-2.1
 - removed aliases from postfix-files (#135840)
 - fixed postalias call in init script

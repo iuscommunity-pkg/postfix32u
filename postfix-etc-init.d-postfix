@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # postfix      Postfix Mail Transfer Agent
 #
@@ -34,7 +34,20 @@ RETVAL=0
 start() {
 	# Start daemons.
 	echo -n "Starting postfix: "
-	/usr/sbin/postalias /etc/aliases
+	alias_database=$(postconf -h alias_database 2>/dev/null)
+	RETVAL=1
+	[ -z "$alias_database" ] && {
+	    failure "determination of alias_database"
+	    echo
+	    return 0	    
+	}
+	/usr/sbin/postalias "$alias_database" 2>/dev/null
+	RETVAL=$?
+	[ $RETVAL -ne 0 ] && {
+	    failure "postalias \"$alias_database\""
+	    echo
+	    return 0	    
+	}
 	/usr/sbin/postfix start 2>/dev/null 1>&2 && success || failure
 	RETVAL=$?
 	[ $RETVAL -eq 0 ] && touch /var/lock/subsys/postfix
