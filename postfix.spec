@@ -32,7 +32,7 @@ Version: %{ver}
 Version: %{ver}.%{releasedate}
 %define ftp_directory experimental
 %endif
-Release: 1
+Release: 2
 Epoch: 2
 
 %define tlsno pfixtls-0.8.18-2.1.0-0.9.7d
@@ -405,8 +405,8 @@ mkdir -p $RPM_BUILD_ROOT%{postfix_doc_dir}
 install -c %{SOURCE3} $RPM_BUILD_ROOT%{postfix_doc_dir}
 
 %if %{PFLOGSUMM}
-install -c pflogsumm-%{pflogsumm_ver}/pflogsumm-faq.txt $RPM_BUILD_ROOT%{postfix_doc_dir}/pflogsumm-faq.txt
-install -c pflogsumm-%{pflogsumm_ver}/pflogsumm.1 $RPM_BUILD_ROOT%{_mandir}/man1/pflogsumm.1
+install -c -m 644 pflogsumm-%{pflogsumm_ver}/pflogsumm-faq.txt $RPM_BUILD_ROOT%{postfix_doc_dir}/pflogsumm-faq.txt
+install -c -m 644 pflogsumm-%{pflogsumm_ver}/pflogsumm.1 $RPM_BUILD_ROOT%{_mandir}/man1/pflogsumm.1
 install -c pflogsumm-%{pflogsumm_ver}/pflogsumm.pl $RPM_BUILD_ROOT%{postfix_command_dir}/pflogsumm
 %endif
 
@@ -537,9 +537,9 @@ exit 0
 %dir %attr(0710, %{postfix_user}, %{maildrop_group}) %{postfix_queue_dir}/public
 %dir %attr(0755, root, root) %{postfix_doc_dir}
 
-%doc %attr(0644, root, root) %{_mandir}/man1/*
-%doc %attr(0644, root, root) %{_mandir}/man5/*
-%doc %attr(0644, root, root) %{_mandir}/man8/*
+%attr(0644, root, root) %{_mandir}/man1/*
+%attr(0644, root, root) %{_mandir}/man5/*
+%attr(0644, root, root) %{_mandir}/man8/*
 %doc %attr(0644, root, root) %{postfix_doc_dir}/*
 
 %attr(0755, root, root) %{postfix_command_dir}/postalias
@@ -577,12 +577,16 @@ exit 0
 %files pflogsumm
 %defattr(-, root, root)
     %doc  %{postfix_doc_dir}/pflogsumm-faq.txt
-    %doc  %{_mandir}/man1/pflogsumm.1.gz
+    %{_mandir}/man1/pflogsumm.1.gz
     %attr(0755, root , root) %{postfix_command_dir}/pflogsumm
 %endif
 
 
 %changelog
+* Sun Jun 06 2004 Florian La Roche <Florian.LaRoche@redhat.de>
+- make sure pflog files have same permissions even if in multiple
+  sub-rpms
+
 * Fri Jun  4 2004 Thomas Woerner <twoerner@redhat.com> 2:2.1.1-1
 - new version 2.1.1
 - compiling postfix PIE
