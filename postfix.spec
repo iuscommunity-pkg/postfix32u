@@ -3,7 +3,9 @@
 %define PCRE 1
 %define SASL 2
 %define TLS 1
+%define IPV6 1
 %define POSTDROP_GID 90
+%define PFLOGSUMM 1
 
 # On Redhat 8.0.1 and earlier, LDAP is compiled with SASL V1 and won't work
 # if postfix is compiled with SASL V2. So we drop to SASL V1 if LDAP is
@@ -19,30 +21,43 @@
 %define dbver db4
 
 # If set to 1 if official version, 0 if snapshot
-%define official 1 
-%define ver 2.0.16
-%define releasedate 20020624
+%define official 1
+%define ver 2.0.18
+%define releasedate 20040120
 %define alternatives 1
 %if %{official}
 Version: %{ver}
 %define ftp_directory official
 %else
-Version: %{ver}-%{releasedate}
+Version: %{ver}.%{releasedate}
 %define ftp_directory experimental
 %endif
 Release: 2
 Epoch: 2
 
-%define tlsno pfixtls-0.8.16-2.0.16-0.9.7b
+%define tlsno pfixtls-0.8.16-2.0.18-0.9.7c
+%if %{PFLOGSUMM}
+%define pflogsumm_ver 1.1.0
+%endif
 
 # Postfix requires one exlusive uid/gid and a 2nd exclusive gid for its own
 # use.  Let me know if the second gid collides with another package.
 # Be careful: Redhat's 'mail' user & group isn't unique!
 %define postfix_uid    89
+%define postfix_user   postfix
 %define postfix_gid    89
-%define maildrop_group postdrop
+%define postfix_group  postfix
+%define postdrop_group postdrop
+%define maildrop_group %{postdrop_group}
 %define maildrop_gid   %{POSTDROP_GID}
-%define docdir %{_docdir}/%{name}-%{version}
+
+%define postfix_config_dir  %{_sysconfdir}/postfix
+%define postfix_daemon_dir  %{_libexecdir}/postfix
+%define postfix_command_dir %{_sbindir}
+%define postfix_queue_dir   %{_var}/spool/postfix
+%define postfix_doc_dir     %{_docdir}/%{name}-%{version}
+%define postfix_sample_dir  %{postfix_doc_dir}/samples
+%define postfix_readme_dir  %{postfix_doc_dir}/README_FILES
 
 Name: postfix
 Group: System Environment/Daemons
@@ -55,18 +70,61 @@ PreReq: /usr/sbin/alternatives
 %else
 Obsoletes: sendmail exim qmail
 %endif
+
 PreReq: %{_sbindir}/groupadd, %{_sbindir}/useradd
+
 Provides: MTA smtpd smtpdaemon /usr/bin/newaliases
 Summary: Postfix Mail Transport Agent
+
+%if %{official}
 Source0: ftp://ftp.porcupine.org/mirrors/postfix-release/%{ftp_directory}/%{name}-%{version}.tar.gz
-Source3: postfix-etc-init.d-postfix
-Source5: postfix-aliases
-Source9: ftp://ftp.aet.tu-cottbus.de/pub/postfix_tls/%{tlsno}.tar.gz
-Source11: README-Postfix-SASL-RedHat.txt
+%else
+Source0: ftp://ftp.porcupine.org/mirrors/postfix-release/%{ftp_directory}/%{name}-%{ver}-%{releasedate}.tar.gz
+%endif
+Source1: postfix-etc-init.d-postfix
+Source2: postfix-aliases
+Source3: README-Postfix-SASL-RedHat.txt
+
+# Sources 50-99 are upstream [patch] contributions
+
+# A note about the various TLS and IPV6 patch files. TLS was
+# originally added to Postfix by Lutz Jaenicke, this is what is in
+# Source50. In addition to the source patch it includes documentation
+# and examples. Dean Strik created a patch to support IPv6, this was
+# taken from the work done by Mark Huizer, and then substantially
+# improved by Jun-ichiro 'itojun' Hagino (known as the KAME
+# patch). Dean provides his patch in two forms, one with IPv6 only (Source52),
+# and one with IPv6 and TLS (Source51). The TLS support in Dean Stick's patch
+# comes from the TLS patch done by Lutz Jaenicke. However Dean Strick
+# did not include the TLS documentation and examples that are in Lutz
+# Jaenicke's tarball. Depending on what this RPM builds we use some
+# combination of patches and files from Sources 50-52.
+#
+# The TLS documentation and examples always comes from Source50, the
+# Lutz Jaenicke contribution. We can do this because even if we don't
+# use this patch to add TLS, but rather use Dean Strik's tls+ipv6
+# patch is still based on Lutz Jaenicke's contribution.
+#
+# If we are building with IPv6 and no TLS then Source52 is used. If we
+# are building with both IPv6 and TLS then Source51 is used and we
+# include the doc and examples from Source50, but not Source50's
+# patch. If we are building with TLS and no IPv6 then we use the
+# original Source50 patch and doc.
+
+Source50: ftp://ftp.aet.tu-cottbus.de/pub/postfix_tls/%{tlsno}.tar.gz
+Source51: ftp://ftp.stack.nl/pub/postfix/tls+ipv6/1.21/tls+ipv6-1.21-pf-2.0.18.patch.gz
+Source52: ftp://ftp.stack.nl/pub/postfix/tls+ipv6/1.21/ipv6-1.21-pf-2.0.18.patch.gz
+%if %{PFLOGSUMM}
+Source53: http://jimsun.linxnet.com/downloads/pflogsumm-%{pflogsumm_ver}.tar.gz
+%endif
+
 # Sources >= 100 are config files
+
 Source100: postfix-sasl.conf
 Source101: postfix-pam.conf
-Source102: postfix-saslauthd.conf
+
+# Patches
+
 Patch1: postfix-config.patch
 Patch2: postfix-smtp_sasl_proto.c.patch
 Patch3: postfix-alternatives.patch
@@ -77,7 +135,7 @@ Patch3: postfix-alternatives.patch
 BuildRoot: %{_tmppath}/%{name}-buildroot
 
 # Determine the different packages required for building postfix
-BuildRequires: gawk, perl, sed, ed, %{dbver}-devel, pkgconfig
+BuildRequires: gawk, perl, sed, ed, %{dbver}-devel, pkgconfig, zlib-devel
 
 Requires: %{dbver}
 
@@ -97,8 +155,8 @@ BuildRequires: pcre, pcre-devel
 %endif
 
 %if %{MYSQL}
-Requires: mysql, mysqlclient9
-BuildRequires: mysql, mysqlclient9, mysql-devel
+Requires: mysql
+BuildRequires: mysql, mysql-devel
 %endif
 
 %if %{TLS}
@@ -115,14 +173,54 @@ TLS
 %prep
 umask 022
 
-%setup -q -a 9
-# Apply the TLS patch, must be at first, because the changes of master.cf
-%if %{TLS}
-patch -p1 <%{tlsno}/pfixtls.diff
-%patch1 -p1 -b .config
+%if %{official}
+%setup -q
 %else
-# Without the TLS patch the context lines in this patch don't match.
-# Set fuzz to ignore all context lines, this is a bit dangerous.
+%setup -q -n %{name}-%{ver}-%{releasedate}
+%endif
+#
+# IPv6 and TLS are sort of hand in hand. We need to apply them in the
+# following order:
+# - IPv6 + TLS (if both are enabled)
+# - IPv6 only
+# - TLS only
+# The last else block with patch fuzz factor enabled fixes master.cf
+# by force if we're compiling without TLS
+#
+%if %{IPV6} && %{TLS}
+echo "TLS and IPv6, patching with %{SOURCE51}"
+gzip -dc %{SOURCE51} | patch -p1 -b -z .ipv6tls
+%endif
+
+%if %{IPV6} && !%{TLS}
+echo "IPv6 Only, patching with %{SOURCE52}"
+gzip -dc %{SOURCE52} | patch -p1 -b -z .ipv6
+%endif
+
+%if %{TLS}
+# It does not matter which TLS patch we are using, we always need the
+# doc and examples from Lutz Jaenicke tarball so unpack it now.
+gzip -dc %{SOURCE50} | tar xf -
+if [ $? -ne 0 ]; then
+  exit $?
+fi
+%endif
+
+%if %{IPV6} && %{TLS}
+# TLS and IPv6
+%patch1 -p1 -b .config
+%endif
+
+%if !%{IPV6} && %{TLS}
+echo "TLS Only, patching with %{tlsno}/pfixtls.diff"
+patch -p1 < %{tlsno}/pfixtls.diff
+%patch1 -p1 -b .config
+%endif
+
+%if !%{IPV6} && !%{TLS}
+# No TLS. Without the TLS patch the context lines in this patch don't
+# match. Set fuzz to ignore all context lines, this is a bit
+# dangerous.
 patch --fuzz=3 -p1 -b -z .config < %{P:1}
 %endif
 
@@ -132,7 +230,25 @@ patch --fuzz=3 -p1 -b -z .config < %{P:1}
 %patch3 -p1 -b .alternatives
 %endif
 
-# Apply optional patches
+%if %{PFLOGSUMM}
+gzip -dc %{SOURCE53} | tar xf -
+%endif
+
+# pflogsumm subpackage
+%if %{PFLOGSUMM}
+%package pflogsumm
+Version: %{pflogsumm_ver}
+Group: System Environment/Daemons
+Summary: A Log Summarizer/Analyzer for the Postfix MTA
+Requires: perl-Date-Calc
+%description pflogsumm
+Pflogsumm is a log analyzer/summarizer for the Postfix MTA.  It is
+designed to provide an over-view of Postfix activity. Pflogsumm
+generates summaries and, in some cases, detailed reports of mail
+server traffic volumes, rejected and bounced email, and server
+warnings, errors and panics.
+
+%endif
 
 %build
 umask 022
@@ -158,13 +274,14 @@ CCARGS="${CCARGS} -fsigned-char"
   AUXLIBS="${AUXLIBS} -L%{_libdir}/mysql -lmysqlclient -lm"
 %endif
 %if %{SASL}
-  %define sasl_lib_dir %{_libdir}/sasl2
+  %define sasl_v1_lib_dir %{_libdir}/sasl
+  %define sasl_v2_lib_dir %{_libdir}/sasl2
   CCARGS="${CCARGS} -DUSE_SASL_AUTH"
   %if %{SASL} <= 1
-    %define sasl_lib_dir %{_libdir}/sasl
+    %define sasl_lib_dir %{sasl_v1_lib_dir}
     AUXLIBS="${AUXLIBS} -L%{sasl_lib_dir} -lsasl"
   %else
-    %define sasl_lib_dir %{_libdir}/sasl2
+    %define sasl_lib_dir %{sasl_v2_lib_dir}
     CCARGS="${CCARGS} -I/usr/include/sasl"
     AUXLIBS="${AUXLIBS} -L%{sasl_lib_dir} -lsasl2"
   %endif
@@ -191,34 +308,47 @@ umask 022
 /bin/mkdir -p $RPM_BUILD_ROOT
 
 # install postfix into $RPM_BUILD_ROOT
+
+# Move stuff around so we don't conflict with sendmail
+mv man/man1/mailq.1      man/man1/mailq.postfix.1
+mv man/man1/newaliases.1 man/man1/newaliases.postfix.1
+mv man/man1/sendmail.1   man/man1/sendmail.postfix.1
+mv man/man5/aliases.5    man/man5/aliases.postfix.5
+
 sh postfix-install -non-interactive \
        install_root=$RPM_BUILD_ROOT \
-       config_directory=%{_sysconfdir}/postfix \
-       daemon_directory=%{_libexecdir}/postfix \
-       command_directory=%{_sbindir} \
-       queue_directory=%{_var}/spool/postfix \
-       sendmail_path=%{_sbindir}/sendmail.postfix \
+       config_directory=%{postfix_config_dir} \
+       daemon_directory=%{postfix_daemon_dir} \
+       command_directory=%{postfix_command_dir} \
+       queue_directory=%{postfix_queue_dir} \
+       sendmail_path=%{postfix_command_dir}/sendmail.postfix \
        newaliases_path=%{_bindir}/newaliases.postfix \
        mailq_path=%{_bindir}/mailq.postfix \
-       mail_owner=postfix \
+       mail_owner=%{postfix_user} \
        setgid_group=%{maildrop_group} \
        manpage_directory=%{_mandir} \
-       sample_directory=%{docdir}/samples \
-       readme_directory=%{docdir}/README_FILES || exit 1
+       sample_directory=%{postfix_sample_dir} \
+       readme_directory=%{postfix_readme_dir} || exit 1
 
 # Move around the TLS docs
 %if %{TLS}
-mkdir -p $RPM_BUILD_ROOT%{docdir}/TLS
-cp %{tlsno}/doc/* $RPM_BUILD_ROOT%{docdir}/TLS
+mkdir -p $RPM_BUILD_ROOT%{postfix_doc_dir}/TLS
+cp %{tlsno}/doc/* $RPM_BUILD_ROOT%{postfix_doc_dir}/TLS
 for i in ACKNOWLEDGEMENTS CHANGES INSTALL README TODO; do
-  cp %{tlsno}/$i $RPM_BUILD_ROOT%{docdir}/TLS
+  cp %{tlsno}/$i $RPM_BUILD_ROOT%{postfix_doc_dir}/TLS
 done
+mkdir -p $RPM_BUILD_ROOT%{postfix_doc_dir}/TLS/contributed
+for i in 00README loadCAcert.pl Postfix_SSL-HOWTO.pdf SSL_CA-HOWTO.pdf fp.csh make-postfix-cert.sh; do
+  cp %{tlsno}/contributed/$i $RPM_BUILD_ROOT%{postfix_doc_dir}/TLS/contributed
+done
+# fix path to perl
+perl -pi -e "s,/usr/local/bin/perl,/usr/bin/perl,g" $RPM_BUILD_ROOT%{postfix_doc_dir}/TLS/contributed/loadCAcert.pl
 %endif
 
-# Change alias_maps and alias_database default directory to %{_sysconfdir}/postfix
-bin/postconf -c $RPM_BUILD_ROOT%{_sysconfdir}/postfix -e \
-	"alias_maps = hash:%{_sysconfdir}/postfix/aliases" \
-	"alias_database = hash:%{_sysconfdir}/postfix/aliases" \
+# Change alias_maps and alias_database default directory to %{postfix_config_dir}
+bin/postconf -c $RPM_BUILD_ROOT%{postfix_config_dir} -e \
+	"alias_maps = hash:%{postfix_config_dir}/aliases" \
+	"alias_database = hash:%{postfix_config_dir}/aliases" \
 || exit 1
 
 # This installs into the /etc/rc.d/init.d directory
@@ -226,60 +356,56 @@ bin/postconf -c $RPM_BUILD_ROOT%{_sysconfdir}/postfix -e \
 install -c %{_sourcedir}/postfix-etc-init.d-postfix \
                   $RPM_BUILD_ROOT/etc/rc.d/init.d/postfix
 
-install -c auxiliary/rmail/rmail $RPM_BUILD_ROOT%{_bindir}/rmail
+install -c auxiliary/rmail/rmail $RPM_BUILD_ROOT%{_bindir}/rmail.postfix
 
 # copy new aliases files and generate a ghost aliases.db file
-cp -f %{_sourcedir}/postfix-aliases $RPM_BUILD_ROOT%{_sysconfdir}/postfix/aliases
-chmod 644 $RPM_BUILD_ROOT%{_sysconfdir}/postfix/aliases
+cp -f %{_sourcedir}/postfix-aliases $RPM_BUILD_ROOT%{postfix_config_dir}/aliases
+chmod 644 $RPM_BUILD_ROOT%{postfix_config_dir}/aliases
 
-touch $RPM_BUILD_ROOT/%{_sysconfdir}/postfix/aliases.db
+touch $RPM_BUILD_ROOT/%{postfix_config_dir}/aliases.db
 
 for i in active bounce corrupt defer deferred flush incoming private saved maildrop public pid; do
-    mkdir -p $RPM_BUILD_ROOT%{_var}/spool/postfix/$i
+    mkdir -p $RPM_BUILD_ROOT%{postfix_queue_dir}/$i
 done
 
-# install smtp-sink/smtp-source by hand
-for i in smtp-sink smtp-source; do
-  install -c -m 755 bin/$i $RPM_BUILD_ROOT%{_sbindir}/
+# install performance benchmark tools by hand
+for i in smtp-sink smtp-source ; do
+  install -c -m 755 bin/$i $RPM_BUILD_ROOT%{postfix_command_dir}/
+  install -c -m 755 man/man1/$i.1 $RPM_BUILD_ROOT%{_mandir}/man1/
 done
-
-# Move stuff around so we don't conflict with sendmail
-mv $RPM_BUILD_ROOT%{_bindir}/rmail $RPM_BUILD_ROOT%{_bindir}/rmail.postfix
-mv $RPM_BUILD_ROOT%{_mandir}/man1/mailq.1 $RPM_BUILD_ROOT%{_mandir}/man1/mailq.postfix.1
-mv $RPM_BUILD_ROOT%{_mandir}/man1/newaliases.1 $RPM_BUILD_ROOT%{_mandir}/man1/newaliases.postfix.1
-mv $RPM_BUILD_ROOT%{_mandir}/man5/aliases.5 $RPM_BUILD_ROOT%{_mandir}/man5/aliases.postfix.5
 
 # RPM compresses man pages automatically.
 # - Edit postfix-files to reflect this, so post-install won't get confused
 #   when called during package installation.
-ed $RPM_BUILD_ROOT%{_sysconfdir}/postfix/postfix-files <<EOF || exit 1
+ed $RPM_BUILD_ROOT%{postfix_config_dir}/postfix-files <<EOF || exit 1
 %s/\(\/man[158]\/.*\.[158]\):/\1.gz:/
 w
 q
 EOF
 
+cat $RPM_BUILD_ROOT%{postfix_config_dir}/postfix-files
 # Install the smtpd.conf file for SASL support.
-mkdir -p $RPM_BUILD_ROOT%{sasl_lib_dir}
-install -m 644 %SOURCE100 $RPM_BUILD_ROOT%{sasl_lib_dir}/smtpd.conf
+# See README-Postfix-SASL-RedHat.txt for why we need to set saslauthd_version
+# in the v1 version of smtpd.conf
+mkdir -p $RPM_BUILD_ROOT%{sasl_v1_lib_dir}
+install -m 644 %{SOURCE100} $RPM_BUILD_ROOT%{sasl_v1_lib_dir}/smtpd.conf
+echo "saslauthd_version: 2" >> $RPM_BUILD_ROOT%{sasl_v1_lib_dir}/smtpd.conf
+
+mkdir -p $RPM_BUILD_ROOT%{sasl_v2_lib_dir}
+install -m 644 %{SOURCE100} $RPM_BUILD_ROOT%{sasl_v2_lib_dir}/smtpd.conf
+
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/pam.d
-install -m 644 %SOURCE101 $RPM_BUILD_ROOT%{_sysconfdir}/pam.d/smtp.postfix
-mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig
-install -m 644 %SOURCE102 $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/saslauthd
+install -m 644 %{SOURCE101} $RPM_BUILD_ROOT%{_sysconfdir}/pam.d/smtp.postfix
 
 # Install Postfix Red Hat HOWTO.
-mkdir -p $RPM_BUILD_ROOT%{docdir}
-install -c %{SOURCE11} $RPM_BUILD_ROOT%{docdir}
+mkdir -p $RPM_BUILD_ROOT%{postfix_doc_dir}
+install -c %{SOURCE3} $RPM_BUILD_ROOT%{postfix_doc_dir}
 
-# remove LICENSE file from /etc/postfix (it's still in docdir)
-rm -f $RPM_BUILD_ROOT%{_sysconfdir}/postfix/LICENSE
-ed $RPM_BUILD_ROOT%{_sysconfdir}/postfix/postfix-files <<EOF || exit 1
-g/LICENSE/d
-w
-q
-EOF
-
-# fix path to perl
-perl -pi -e "s,/usr/local/bin/perl,/usr/bin/perl,g" html/TLS/loadCAcert.pl
+%if %{PFLOGSUMM}
+install -c pflogsumm-%{pflogsumm_ver}/pflogsumm-faq.txt $RPM_BUILD_ROOT%{postfix_doc_dir}/pflogsumm-faq.txt
+install -c pflogsumm-%{pflogsumm_ver}/pflogsumm.1 $RPM_BUILD_ROOT%{_mandir}/man1/pflogsumm.1
+install -c pflogsumm-%{pflogsumm_ver}/pflogsumm.pl $RPM_BUILD_ROOT%{postfix_command_dir}/pflogsumm
+%endif
 
 %post
 umask 022
@@ -287,25 +413,26 @@ umask 022
 /sbin/chkconfig --add postfix
 
 # upgrade configuration files if necessary
-sh %{_sysconfdir}/postfix/post-install \
-	config_directory=%{_sysconfdir}/postfix \
-	daemon_directory=%{_libexecdir}/postfix \
-	command_directory=%{_sbindir} \
-	mail_owner=postfix \
+sh %{postfix_config_dir}/post-install \
+	config_directory=%{postfix_config_dir} \
+	daemon_directory=%{postfix_daemon_dir} \
+	command_directory=%{postfix_command_dir} \
+	mail_owner=%{postfix_user} \
 	setgid_group=%{maildrop_group} \
 	manpage_directory=%{_mandir} \
-	sample_directory=%{docdir}/samples \
-	readme_directory=%{docdir}/README_FILES \
+	sample_directory=%{postfix_sample_dir} \
+	readme_directory=%{postfix_readme_dir} \
 	upgrade-package
 
 %if %alternatives
-/usr/sbin/alternatives --install %{_sbindir}/sendmail mta %{_sbindir}/sendmail.postfix 30 \
+/usr/sbin/alternatives --install %{postfix_command_dir}/sendmail mta %{postfix_command_dir}/sendmail.postfix 30 \
         --slave %{_bindir}/mailq mta-mailq %{_bindir}/mailq.postfix \
         --slave %{_bindir}/newaliases mta-newaliases %{_bindir}/newaliases.postfix \
         --slave %{_sysconfdir}/pam.d/smtp mta-pam %{_sysconfdir}/pam.d/smtp.postfix \
         --slave %{_bindir}/rmail mta-rmail %{_bindir}/rmail.postfix \
         --slave %{_mandir}/man1/mailq.1.gz mta-mailqman %{_mandir}/man1/mailq.postfix.1.gz \
         --slave %{_mandir}/man1/newaliases.1.gz mta-newaliasesman %{_mandir}/man1/newaliases.postfix.1.gz \
+        --slave %{_mandir}/man8/sendmail.8.gz mta-sendmailman %{_mandir}/man1/sendmail.postfix.1.gz \
         --slave %{_mandir}/man5/aliases.5.gz mta-aliasesman %{_mandir}/man5/aliases.postfix.5.gz \
 	--initscript postfix
 %endif
@@ -313,9 +440,9 @@ sh %{_sysconfdir}/postfix/post-install \
 %pre
 # Add user and groups if necessary
 %{_sbindir}/groupadd -g %{maildrop_gid} -r %{maildrop_group} 2>/dev/null
-%{_sbindir}/groupadd -g %{postfix_gid} -r postfix 2>/dev/null
+%{_sbindir}/groupadd -g %{postfix_gid} -r %{postfix_group} 2>/dev/null
 %{_sbindir}/groupadd -g 12 -r mail 2>/dev/null
-%{_sbindir}/useradd -d %{_var}/spool/postfix -s /sbin/nologin -g postfix -G mail -M -r -u %{postfix_uid} postfix 2>/dev/null
+%{_sbindir}/useradd -d %{postfix_queue_dir} -s /sbin/nologin -g %{postfix_group} -G mail -M -r -u %{postfix_uid} %{postfix_user} 2>/dev/null
 exit 0
 
 %preun
@@ -326,7 +453,7 @@ if [ "$1" = 0 ]; then
     /sbin/service postfix stop &>/dev/null
     /sbin/chkconfig --del postfix
 %if %alternatives
-    /usr/sbin/alternatives --remove mta %{_sbindir}/sendmail.postfix
+    /usr/sbin/alternatives --remove mta %{postfix_command_dir}/sendmail.postfix
 %endif
 
 fi
@@ -344,100 +471,269 @@ exit 0
 
 
 %files
+
+# For correct directory permissions check postfix-install script.
+# It reads the file postfix-files which defines the ownership
+# and permissions for all files postfix installs, we avoid explicitly
+# setting anything in the %files sections that is handled by
+# the upstream install script so we don't have an issue with keeping
+# the spec file and upstream in sync.
+
 %defattr(-, root, root)
 
-%config(noreplace) %{sasl_lib_dir}/smtpd.conf
+# Config files not part of upstream
+
+%config(noreplace) %{sasl_v1_lib_dir}/smtpd.conf
+%config(noreplace) %{sasl_v2_lib_dir}/smtpd.conf
 %config(noreplace) %{_sysconfdir}/pam.d/smtp.postfix
-%config(noreplace) %{_sysconfdir}/sysconfig/saslauthd
-
-%verify(not md5 size mtime) %config %dir %{_sysconfdir}/postfix
-%attr(0755, root, root) %config %{_sysconfdir}/postfix/postfix-script
-%attr(0755, root, root) %config %{_sysconfdir}/postfix/post-install
-%attr(0644, root, root)                                                %{_sysconfdir}/postfix/postfix-files
-%attr(0644, root, root) %verify(not md5 size mtime) %config(noreplace) %{_sysconfdir}/postfix/main.cf
-%attr(0644, root, root)                                                %{_sysconfdir}/postfix/main.cf.default
-%attr(0644, root, root) %verify(not md5 size mtime) %config(noreplace) %{_sysconfdir}/postfix/master.cf
-%attr(0644, root, root) %verify(not md5 size mtime) %config(noreplace) %{_sysconfdir}/postfix/access
-%attr(0644, root, root) %verify(not md5 size mtime) %config(noreplace) %{_sysconfdir}/postfix/aliases
-%attr(0644, root, root) %verify(not md5 size mtime) %config(noreplace) %{_sysconfdir}/postfix/aliases.db
-%attr(0644, root, root) %verify(not md5 size mtime) %config(noreplace) %{_sysconfdir}/postfix/canonical
-%attr(0644, root, root) %verify(not md5 size mtime) %config(noreplace) %{_sysconfdir}/postfix/pcre_table
-%attr(0644, root, root) %verify(not md5 size mtime) %config(noreplace) %{_sysconfdir}/postfix/regexp_table
-%attr(0644, root, root) %verify(not md5 size mtime) %config(noreplace) %{_sysconfdir}/postfix/relocated
-%attr(0644, root, root) %verify(not md5 size mtime) %config(noreplace) %{_sysconfdir}/postfix/transport
-%attr(0644, root, root) %verify(not md5 size mtime) %config(noreplace) %{_sysconfdir}/postfix/virtual
-
-#%dir %attr(-, root, root) %{_sysconfdir}/postfix/README_FILES
-#%attr(0644,   root, root) %{_sysconfdir}/postfix/README_FILES/*
-
+%config(noreplace) %{postfix_config_dir}/aliases.db
 %attr(0755, root, root) %config /etc/rc.d/init.d/postfix
 
-# For correct directory permissions check postfix-install script
-%dir %attr(0700, postfix, root)     %verify(not md5 size mtime) %{_var}/spool/postfix/active
-%dir %attr(0700, postfix, root)     %verify(not md5 size mtime) %{_var}/spool/postfix/bounce
-%dir %attr(0700, postfix, root)     %verify(not md5 size mtime) %{_var}/spool/postfix/corrupt
-%dir %attr(0700, postfix, root)     %verify(not md5 size mtime) %{_var}/spool/postfix/defer
-%dir %attr(0700, postfix, root)     %verify(not md5 size mtime) %{_var}/spool/postfix/deferred
-%dir %attr(0700, postfix, root)     %verify(not md5 size mtime) %{_var}/spool/postfix/flush
-%dir %attr(0700, postfix, root)     %verify(not md5 size mtime) %{_var}/spool/postfix/incoming
-%dir %attr(0700, postfix, root)     %verify(not md5 size mtime) %{_var}/spool/postfix/private
-%dir %attr(0700, postfix, root)     %verify(not md5 size mtime) %{_var}/spool/postfix/saved
+# Misc files
 
-%dir %attr(0730, postfix, %{maildrop_group}) %verify(not md5 size mtime) %{_var}/spool/postfix/maildrop
-%dir %attr(0710, postfix, %{maildrop_group}) %verify(not md5 size mtime) %{_var}/spool/postfix/public
-
-%dir %attr(0755, root, root)        %verify(not md5 size mtime) %{_var}/spool/postfix/pid
-
-%doc %{docdir}
-
-%dir %attr(0755, root, root) %verify(not md5 size mtime) %{_libexecdir}/postfix
-%{_libexecdir}/postfix/bounce
-%{_libexecdir}/postfix/cleanup
-%{_libexecdir}/postfix/error
-%{_libexecdir}/postfix/flush
-%{_libexecdir}/postfix/lmtp
-%{_libexecdir}/postfix/local
-%{_libexecdir}/postfix/master
-%{_libexecdir}/postfix/nqmgr
-%{_libexecdir}/postfix/pickup
-%{_libexecdir}/postfix/pipe
-%{_libexecdir}/postfix/proxymap
-%{_libexecdir}/postfix/qmgr
-%{_libexecdir}/postfix/qmqpd
-%{_libexecdir}/postfix/showq
-%{_libexecdir}/postfix/smtp
-%{_libexecdir}/postfix/smtpd
-%{_libexecdir}/postfix/spawn
-%{_libexecdir}/postfix/trivial-rewrite
-%{_libexecdir}/postfix/virtual
-
-%if %{TLS}
-%{_libexecdir}/postfix/tlsmgr
-%endif
-
-%{_sbindir}/postalias
-%{_sbindir}/postcat
-%{_sbindir}/postconf
-%attr(2755,root,%{maildrop_group}) %{_sbindir}/postdrop
-%attr(2755,root,%{maildrop_group}) %{_sbindir}/postqueue
-%{_sbindir}/postfix
-%{_sbindir}/postkick
-%{_sbindir}/postlock
-%{_sbindir}/postlog
-%{_sbindir}/postmap
-%{_sbindir}/postsuper
-
-%{_sbindir}/smtp-sink
-%{_sbindir}/smtp-source
-
-%{_sbindir}/sendmail.postfix
-%{_bindir}/mailq.postfix
-%{_bindir}/newaliases.postfix
 %attr(0755, root, root) %{_bindir}/rmail.postfix
 
-%{_mandir}/*/*
+%attr(0755, root , root) %{postfix_command_dir}/smtp-sink
+%attr(0755, root , root) %{postfix_command_dir}/smtp-source
+
+%doc %attr(0644, root , root) %{_mandir}/man1/smtp-sink.1.gz
+%doc %attr(0644, root , root) %{_mandir}/man1/smtp-source.1.gz
+
+%doc %{postfix_doc_dir}/README-Postfix-SASL-RedHat.txt
+
+%if %{IPV6}
+  %doc %attr(0644, root             , root             )                    %{postfix_readme_dir}/IPV6_README
+  %doc %attr(0644, root             , root             )                    %{postfix_sample_dir}/sample-ipv6.cf
+%endif
+%if %{TLS}
+    %{postfix_daemon_dir}/tlsmgr
+    %doc %{postfix_doc_dir}/TLS
+    %doc %{postfix_sample_dir}/sample-tls.cf
+    %doc %{_mandir}/man8/tlsmgr.8.gz
+%endif
+
+# Files installed by upstream release. List generated by running parse-postfix-files <release>/conf/postfix-files
+
+      %attr(0755, root             , root             )                    %{postfix_command_dir}/postalias
+      %attr(0755, root             , root             )                    %{postfix_command_dir}/postcat
+      %attr(0755, root             , root             )                    %{postfix_command_dir}/postconf
+      %attr(2755, root             , %{maildrop_group})                    %{postfix_command_dir}/postdrop
+      %attr(0755, root             , root             )                    %{postfix_command_dir}/postfix
+      %attr(0755, root             , root             )                    %{postfix_command_dir}/postkick
+      %attr(0755, root             , root             )                    %{postfix_command_dir}/postlock
+      %attr(0755, root             , root             )                    %{postfix_command_dir}/postlog
+      %attr(0755, root             , root             )                    %{postfix_command_dir}/postmap
+      %attr(2755, root             , %{maildrop_group})                    %{postfix_command_dir}/postqueue
+      %attr(0755, root             , root             )                    %{postfix_command_dir}/postsuper
+ %dir %attr(0755, root             , root             )                    %{postfix_config_dir}
+      %attr(0644, root             , root             )                    %{postfix_config_dir}/LICENSE
+      %attr(0644, root             , root             ) %config(noreplace) %{postfix_config_dir}/access
+      %attr(0644, root             , root             ) %config(noreplace) %{postfix_config_dir}/aliases
+      %attr(0644, root             , root             ) %config(noreplace) %{postfix_config_dir}/canonical
+      %attr(0644, root             , root             ) %config(noreplace) %{postfix_config_dir}/main.cf
+      %attr(0644, root             , root             )                    %{postfix_config_dir}/main.cf.default
+      %attr(0644, root             , root             ) %config(noreplace) %{postfix_config_dir}/master.cf
+      %attr(0644, root             , root             ) %config(noreplace) %{postfix_config_dir}/pcre_table
+      %attr(0755, root             , root             )                    %{postfix_config_dir}/post-install
+      %attr(0644, root             , root             )                    %{postfix_config_dir}/postfix-files
+      %attr(0755, root             , root             )                    %{postfix_config_dir}/postfix-script
+      %attr(0644, root             , root             ) %config(noreplace) %{postfix_config_dir}/regexp_table
+      %attr(0644, root             , root             ) %config(noreplace) %{postfix_config_dir}/relocated
+      %attr(0644, root             , root             ) %config(noreplace) %{postfix_config_dir}/transport
+      %attr(0644, root             , root             ) %config(noreplace) %{postfix_config_dir}/virtual
+ %dir %attr(0755, root             , root             )                    %{postfix_daemon_dir}
+      %attr(0755, root             , root             )                    %{postfix_daemon_dir}/bounce
+      %attr(0755, root             , root             )                    %{postfix_daemon_dir}/cleanup
+      %attr(0755, root             , root             )                    %{postfix_daemon_dir}/error
+      %attr(0755, root             , root             )                    %{postfix_daemon_dir}/flush
+      %attr(0755, root             , root             )                    %{postfix_daemon_dir}/lmtp
+      %attr(0755, root             , root             )                    %{postfix_daemon_dir}/local
+      %attr(0755, root             , root             )                    %{postfix_daemon_dir}/master
+      %attr(0755, root             , root             )                    %{postfix_daemon_dir}/nqmgr
+      %attr(0755, root             , root             )                    %{postfix_daemon_dir}/pickup
+      %attr(0755, root             , root             )                    %{postfix_daemon_dir}/pipe
+      %attr(0755, root             , root             )                    %{postfix_daemon_dir}/proxymap
+      %attr(0755, root             , root             )                    %{postfix_daemon_dir}/qmgr
+      %attr(0755, root             , root             )                    %{postfix_daemon_dir}/qmqpd
+      %attr(0755, root             , root             )                    %{postfix_daemon_dir}/showq
+      %attr(0755, root             , root             )                    %{postfix_daemon_dir}/smtp
+      %attr(0755, root             , root             )                    %{postfix_daemon_dir}/smtpd
+      %attr(0755, root             , root             )                    %{postfix_daemon_dir}/spawn
+      %attr(0755, root             , root             )                    %{postfix_daemon_dir}/trivial-rewrite
+      %attr(0755, root             , root             )                    %{postfix_daemon_dir}/virtual
+      %attr(0755, root             , root             )                    %{_bindir}/mailq.postfix
+ %doc %attr(0644, root             , root             )                    %{_mandir}/man1/mailq.postfix.1.gz
+ %doc %attr(0644, root             , root             )                    %{_mandir}/man1/newaliases.postfix.1.gz
+ %doc %attr(0644, root             , root             )                    %{_mandir}/man1/postalias.1.gz
+ %doc %attr(0644, root             , root             )                    %{_mandir}/man1/postcat.1.gz
+ %doc %attr(0644, root             , root             )                    %{_mandir}/man1/postconf.1.gz
+ %doc %attr(0644, root             , root             )                    %{_mandir}/man1/postdrop.1.gz
+ %doc %attr(0644, root             , root             )                    %{_mandir}/man1/postfix.1.gz
+ %doc %attr(0644, root             , root             )                    %{_mandir}/man1/postkick.1.gz
+ %doc %attr(0644, root             , root             )                    %{_mandir}/man1/postlock.1.gz
+ %doc %attr(0644, root             , root             )                    %{_mandir}/man1/postlog.1.gz
+ %doc %attr(0644, root             , root             )                    %{_mandir}/man1/postmap.1.gz
+ %doc %attr(0644, root             , root             )                    %{_mandir}/man1/postqueue.1.gz
+ %doc %attr(0644, root             , root             )                    %{_mandir}/man1/postsuper.1.gz
+ %doc %attr(0644, root             , root             )                    %{_mandir}/man1/sendmail.postfix.1.gz
+ %doc %attr(0644, root             , root             )                    %{_mandir}/man5/access.5.gz
+ %doc %attr(0644, root             , root             )                    %{_mandir}/man5/aliases.postfix.5.gz
+ %doc %attr(0644, root             , root             )                    %{_mandir}/man5/canonical.5.gz
+ %doc %attr(0644, root             , root             )                    %{_mandir}/man5/pcre_table.5.gz
+ %doc %attr(0644, root             , root             )                    %{_mandir}/man5/regexp_table.5.gz
+ %doc %attr(0644, root             , root             )                    %{_mandir}/man5/relocated.5.gz
+ %doc %attr(0644, root             , root             )                    %{_mandir}/man5/transport.5.gz
+ %doc %attr(0644, root             , root             )                    %{_mandir}/man5/virtual.5.gz
+ %doc %attr(0644, root             , root             )                    %{_mandir}/man8/bounce.8.gz
+ %doc %attr(0644, root             , root             )                    %{_mandir}/man8/cleanup.8.gz
+ %doc %attr(0644, root             , root             )                    %{_mandir}/man8/defer.8.gz
+ %doc %attr(0644, root             , root             )                    %{_mandir}/man8/error.8.gz
+ %doc %attr(0644, root             , root             )                    %{_mandir}/man8/flush.8.gz
+ %doc %attr(0644, root             , root             )                    %{_mandir}/man8/lmtp.8.gz
+ %doc %attr(0644, root             , root             )                    %{_mandir}/man8/local.8.gz
+ %doc %attr(0644, root             , root             )                    %{_mandir}/man8/master.8.gz
+ %doc %attr(0644, root             , root             )                    %{_mandir}/man8/nqmgr.8.gz
+ %doc %attr(0644, root             , root             )                    %{_mandir}/man8/pickup.8.gz
+ %doc %attr(0644, root             , root             )                    %{_mandir}/man8/pipe.8.gz
+ %doc %attr(0644, root             , root             )                    %{_mandir}/man8/proxymap.8.gz
+ %doc %attr(0644, root             , root             )                    %{_mandir}/man8/qmgr.8.gz
+ %doc %attr(0644, root             , root             )                    %{_mandir}/man8/qmqpd.8.gz
+ %doc %attr(0644, root             , root             )                    %{_mandir}/man8/showq.8.gz
+ %doc %attr(0644, root             , root             )                    %{_mandir}/man8/smtp.8.gz
+ %doc %attr(0644, root             , root             )                    %{_mandir}/man8/smtpd.8.gz
+ %doc %attr(0644, root             , root             )                    %{_mandir}/man8/spawn.8.gz
+ %doc %attr(0644, root             , root             )                    %{_mandir}/man8/trivial-rewrite.8.gz
+ %doc %attr(0644, root             , root             )                    %{_mandir}/man8/virtual.8.gz
+      %attr(0755, root             , root             )                    %{_bindir}/newaliases.postfix
+ %dir %attr(0755, root             , root             )                    %{postfix_queue_dir}
+ %dir %attr(0700, %{postfix_user}  , root             )                    %{postfix_queue_dir}/active
+ %dir %attr(0700, %{postfix_user}  , root             )                    %{postfix_queue_dir}/bounce
+ %dir %attr(0700, %{postfix_user}  , root             )                    %{postfix_queue_dir}/corrupt
+ %dir %attr(0700, %{postfix_user}  , root             )                    %{postfix_queue_dir}/defer
+ %dir %attr(0700, %{postfix_user}  , root             )                    %{postfix_queue_dir}/deferred
+ %dir %attr(0700, %{postfix_user}  , root             )                    %{postfix_queue_dir}/flush
+ %dir %attr(0700, %{postfix_user}  , root             )                    %{postfix_queue_dir}/hold
+ %dir %attr(0700, %{postfix_user}  , root             )                    %{postfix_queue_dir}/incoming
+ %dir %attr(0730, %{postfix_user}  , %{maildrop_group})                    %{postfix_queue_dir}/maildrop
+ %dir %attr(0755, root             , root             )                    %{postfix_queue_dir}/pid
+ %dir %attr(0700, %{postfix_user}  , root             )                    %{postfix_queue_dir}/private
+ %dir %attr(0710, %{postfix_user}  , %{maildrop_group})                    %{postfix_queue_dir}/public
+ %dir %attr(0755, root             , root             )                    %{postfix_readme_dir}
+ %doc %attr(0644, root             , root             )                    %{postfix_readme_dir}/ADDRESS_CLASS_README
+ %doc %attr(0644, root             , root             )                    %{postfix_readme_dir}/DB_README
+ %doc %attr(0644, root             , root             )                    %{postfix_readme_dir}/DEBUG_README
+ %doc %attr(0644, root             , root             )                    %{postfix_readme_dir}/ETRN_README
+ %doc %attr(0644, root             , root             )                    %{postfix_readme_dir}/FILTER_README
+ %doc %attr(0644, root             , root             )                    %{postfix_readme_dir}/INSTALL
+ %doc %attr(0644, root             , root             )                    %{postfix_readme_dir}/LDAP_README
+ %doc %attr(0644, root             , root             )                    %{postfix_readme_dir}/LINUX_README
+ %doc %attr(0644, root             , root             )                    %{postfix_readme_dir}/LMTP_README
+ %doc %attr(0644, root             , root             )                    %{postfix_readme_dir}/LOCAL_RECIPIENT_README
+ %doc %attr(0644, root             , root             )                    %{postfix_readme_dir}/MACOSX_README
+ %doc %attr(0644, root             , root             )                    %{postfix_readme_dir}/MAILDROP_README
+ %doc %attr(0644, root             , root             )                    %{postfix_readme_dir}/MYSQL_README
+ %doc %attr(0644, root             , root             )                    %{postfix_readme_dir}/NFS_README
+ %doc %attr(0644, root             , root             )                    %{postfix_readme_dir}/PACKAGE_README
+ %doc %attr(0644, root             , root             )                    %{postfix_readme_dir}/PCRE_README
+ %doc %attr(0644, root             , root             )                    %{postfix_readme_dir}/QMQP_README
+ %doc %attr(0644, root             , root             )                    %{postfix_readme_dir}/RELEASE_NOTES
+ %doc %attr(0644, root             , root             )                    %{postfix_readme_dir}/RESTRICTION_CLASS_README
+ %doc %attr(0644, root             , root             )                    %{postfix_readme_dir}/SASL_README
+ %doc %attr(0644, root             , root             )                    %{postfix_readme_dir}/ULTRIX_README
+ %doc %attr(0644, root             , root             )                    %{postfix_readme_dir}/UUCP_README
+ %doc %attr(0644, root             , root             )                    %{postfix_readme_dir}/VERP_README
+ %doc %attr(0644, root             , root             )                    %{postfix_readme_dir}/VIRTUAL_README
+ %dir %attr(0755, root             , root             )                    %{postfix_sample_dir}
+ %doc %attr(0644, root             , root             )                    %{postfix_sample_dir}/sample-aliases.cf
+ %doc %attr(0644, root             , root             )                    %{postfix_sample_dir}/sample-auth.cf
+ %doc %attr(0644, root             , root             )                    %{postfix_sample_dir}/sample-canonical.cf
+ %doc %attr(0644, root             , root             )                    %{postfix_sample_dir}/sample-compatibility.cf
+ %doc %attr(0644, root             , root             )                    %{postfix_sample_dir}/sample-debug.cf
+ %doc %attr(0644, root             , root             )                    %{postfix_sample_dir}/sample-filter.cf
+ %doc %attr(0644, root             , root             )                    %{postfix_sample_dir}/sample-flush.cf
+ %doc %attr(0644, root             , root             )                    %{postfix_sample_dir}/sample-ldap.cf
+ %doc %attr(0644, root             , root             )                    %{postfix_sample_dir}/sample-lmtp.cf
+ %doc %attr(0644, root             , root             )                    %{postfix_sample_dir}/sample-local.cf
+ %doc %attr(0644, root             , root             )                    %{postfix_sample_dir}/sample-mime.cf
+ %doc %attr(0644, root             , root             )                    %{postfix_sample_dir}/sample-misc.cf
+ %doc %attr(0644, root             , root             )                    %{postfix_sample_dir}/sample-pcre-access.cf
+ %doc %attr(0644, root             , root             )                    %{postfix_sample_dir}/sample-pcre-body.cf
+ %doc %attr(0644, root             , root             )                    %{postfix_sample_dir}/sample-pcre-header.cf
+ %doc %attr(0644, root             , root             )                    %{postfix_sample_dir}/sample-qmqpd.cf
+ %doc %attr(0644, root             , root             )                    %{postfix_sample_dir}/sample-rate.cf
+ %doc %attr(0644, root             , root             )                    %{postfix_sample_dir}/sample-regexp-access.cf
+ %doc %attr(0644, root             , root             )                    %{postfix_sample_dir}/sample-regexp-body.cf
+ %doc %attr(0644, root             , root             )                    %{postfix_sample_dir}/sample-regexp-header.cf
+ %doc %attr(0644, root             , root             )                    %{postfix_sample_dir}/sample-relocated.cf
+ %doc %attr(0644, root             , root             )                    %{postfix_sample_dir}/sample-resource.cf
+ %doc %attr(0644, root             , root             )                    %{postfix_sample_dir}/sample-rewrite.cf
+ %doc %attr(0644, root             , root             )                    %{postfix_sample_dir}/sample-smtp.cf
+ %doc %attr(0644, root             , root             )                    %{postfix_sample_dir}/sample-smtpd.cf
+ %doc %attr(0644, root             , root             )                    %{postfix_sample_dir}/sample-transport.cf
+ %doc %attr(0644, root             , root             )                    %{postfix_sample_dir}/sample-virtual.cf
+      %attr(0755, root             , root             )                    %{_sbindir}/sendmail.postfix
+
+%if %{PFLOGSUMM}
+%files pflogsumm
+    %doc  %{postfix_doc_dir}/pflogsumm-faq.txt
+    %doc  %{_mandir}/man1/pflogsumm.1.gz
+    %attr(0755, root , root) %{postfix_command_dir}/pflogsumm
+%endif
+
 
 %changelog
+* Tue Mar 16 2004 John Dennis <jdennis@finch.boston.redhat.com> 2:2.0.18-2
+- fix sendmail man page (again), make pflogsumm a subpackage
+
+* Mon Mar 15 2004 John Dennis <jdennis@finch.boston.redhat.com> 2:2.0.18-1
+- bring source up to upstream release 2.0.18
+- include pflogsumm, fixes bug #68799
+- include smtp-sink, smtp-source man pages, fixes bug #118163
+
+* Tue Mar 02 2004 Elliot Lee <sopwith@redhat.com>
+- rebuilt
+
+* Tue Feb 24 2004 John Dennis <jdennis@finch.boston.redhat.com> 2:2.0.16-14
+- fix bug 74553, make alternatives track sendmail man page
+
+* Tue Feb 24 2004 John Dennis <jdennis@finch.boston.redhat.com> 2:2.0.16-13
+- remove /etc/sysconfig/saslauthd from rpm, fixes bug 113975
+
+* Wed Feb 18 2004 John Dennis <jdennis@porkchop.devel.redhat.com>
+- set sasl back to v2 for mainline, this is good for fedora and beyond,
+  for RHEL3, we'll branch and set set sasl to v1 and turn off ipv6
+
+* Tue Feb 17 2004 John Dennis <jdennis@porkchop.devel.redhat.com>
+- revert back to v1 of sasl because LDAP still links against v1 and we can't 
+- bump revision for build
+  have two different versions of the sasl library loaded in one load image at
+  the same time. How is that possible? Because the sasl libraries have different 
+  names (libsasl.so & libsasl2.so) but export the same symbols :-(
+  Fixes bugs 115249 and 111767
+
+* Fri Feb 13 2004 Elliot Lee <sopwith@redhat.com>
+- rebuilt
+
+* Wed Jan 21 2004 John Dennis <jdennis@finch.boston.redhat.com> 2:2.0.16-7
+- fix bug 77216, support snapshot builds
+
+* Tue Jan 20 2004 John Dennis <jdennis@finch.boston.redhat.com> 2:2.0.16-6
+- add support for IPv6 via Dean Strik's patches, fixes bug 112491
+
+* Tue Jan 13 2004 John Dennis <jdennis@finch.boston.redhat.com> 2:2.0.16-4
+- remove mysqlclient prereq, fixes bug 101779
+- remove md5 verification override, this fixes bug 113370. Write parse-postfix-files
+  script to generate explicit list of all upstream files with ownership, modes, etc.
+  carefully add back in all other not upstream files, files list is hopefully
+  rock solid now.
+
+* Mon Jan 12 2004 John Dennis <jdennis@finch.boston.redhat.com> 2:2.0.16-3
+- add zlib-devel build prereq, fixes bug 112822
+- remove copy of resolve.conf into chroot jail, fixes bug 111923
+
+* Tue Dec 16 2003 John Dennis <jdennis@porkchop.devel.redhat.com>
+- bump release to build 3.0E errata update
+
 * Sat Dec 13 2003 Jeff Johnson <jbj@jbj.org> 2:2.0.16-2
 - rebuild against db-4.2.52.
  

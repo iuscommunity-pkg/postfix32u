@@ -34,9 +34,6 @@ RETVAL=0
 start() {
 	# Start daemons.
 	echo -n "Starting postfix: "
-	if [ ! -e /var/spool/postfix/etc/resolv.conf ]; then
-		cp -f /etc/resolv.conf /var/spool/postfix/etc
-	fi
 	/usr/sbin/postalias /etc/postfix/aliases
 	/usr/sbin/postfix start 2>/dev/null 1>&2 && success || failure
 	RETVAL=$?

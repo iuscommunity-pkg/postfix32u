@@ -13,7 +13,7 @@ broken_sasl_auth_clients = yes
 smtpd_recipient_restrictions = 
   permit_sasl_authenticated,
   permit_mynetworks,
-  check_relay_domains
+  reject_unauth_destination
 
 2) Turn on saslauthd:
 
@@ -134,9 +134,16 @@ SASL will use among other things to locate a configuration file for
 the application. The application name Postfix identifies itself as is
 "smtpd". SASL will append ".conf" to the application name and look for
 a config file in its library directory. Thus SASL will read Postfix's
-configuration from:
+configuration from
 
    /usr/lib/sasl2/smtpd.conf
+
+if postfix has been linked against the version 2 library of cyrus-sasl, or:
+
+   /usr/lib/sasl/smtpd.conf
+
+if postfix has been linked against the version 1 library of cyrus-sasl
+
 
 This file names the authentication method SASL will use for Postfix
 (actually for smtpd, other MTA's such as sendmail may use the same
@@ -148,6 +155,28 @@ daemon the contents of this file is:
 This tells SASL when being invoked to authentication for Postfix that
 it should use saslauthd. Saslauthd's mechanism is set in
 /etc/sysconfig/saslauthd (see below).
+
+A note about cyrus-sasl versions and saslauthd. Red Hat cyrus-sasl
+RPM's parallel install both the v1 and v2 versions of cyrus-sasl
+libraries into /usr/lib/sasl and /usr/lib/sasl2 respectively. However
+only the v2 version of saslauthd is installed. The v1 and v2 versions
+saslauthd are not compatible, the protocol used to communicate between
+a client which has linked cyrus-sasl and the saslauthd daemon was
+changed between the v1 and v2 versons of sasluathd. The saslauthd
+daemon that the Red Hat package installs is the v2 version. Therefore
+for a client which has linked against a v1 version of cyrus-sasl must
+communicate using the v2 version of the saslauthd protocol because
+only the v2 version of saslauthd is installed. Red Hat has modified
+the v1 version of the cyrus-sasl library to generate v2 protocol if
+the client is configured to use the v2 protocol. This is accomplished
+by adding a parameter to the sasl service configuration file. Since
+the service is smtpd this file is /usr/lib/sasl/smtpd.conf. Note
+/usr/lib/sasl2/smtpd.conf does not need this extra configuration
+parameter because it will by default speak version 2 of the saslauthd
+protocol. Therefore /usr/lib/sasl/smtpd.conf need the following extra
+line it its file in addition to the pwcheck_method of saslauthd.
+
+saslauthd_version: 2
 
 When Postfix calls on SASL to authenticate it passes to SASL a service
 name. This service name is used in authentication method specific
@@ -203,7 +232,7 @@ authpriv.*;auth.*				/var/log/secure
 Then restart syslogd so the syslog configuration changes will be
 picked up:
 
-       /sbin/service syslogd restart
+       /sbin/service syslog restart
 
 Now all authentication messages at all priorities will log to
 /var/log/secure. 
@@ -277,7 +306,7 @@ These accounts are entirely separate from system accounts, and are used
 only by connecting SMTP clients to authenticate themselves.  Use the
 saslpassword command:
 
-saslpasswd -u realm -c user
+saslpasswd -u `postconf -h myhostname` -c user
 
 to create an account named user which can log into realm.  For the
 realm, make absolutely certain that you use the same value as is set for
@@ -441,4 +470,4 @@ Koetter can be found at: http://postfix.state-of-mind.de
 Please send any comments / corrections to Chris Ricker
 <kaboom@gatech.edu>.  This material can be freely modified and
 redistributed. Additional material provided by John Dennis
-<jdennis@redhat.com>
+<jdennis@redhat.com> and Dax Kelson <dax@gurulabs.com>.

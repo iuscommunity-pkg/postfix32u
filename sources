@@ -1,2 +1,5 @@
-b39c08eabe807db4af5bcb1cafc9761e  pfixtls-0.8.16-2.0.16-0.9.7b.tar.gz
-ac13776442ba7708e683bc1bfbadab2f  postfix-2.0.16.tar.gz
+f30495d44b140239df02a0599d280d68  ipv6-1.21-pf-2.0.18.patch.gz
+2d9b07d3847a06b77db3be25973acf14  pfixtls-0.8.16-2.0.18-0.9.7c.tar.gz
+1f78fcaf2a36ec3520ecff286a45251a  pflogsumm-1.1.0.tar.gz
+3e5baf2cc497a5fb1aaa6ba11aa6491e  postfix-2.0.18.tar.gz
+8d273f922352a0ff32c57c29bec26b46  tls+ipv6-1.21-pf-2.0.18.patch.gz
