@@ -46,7 +46,7 @@ Obsoletes: sendmail exim qmail
 PreReq: %{_sbindir}/groupadd, %{_sbindir}/useradd
 Epoch: 2
 Provides: MTA smtpd smtpdaemon /usr/bin/newaliases
-Release: 4
+Release: 5
 Summary: Postfix Mail Transport Agent
 Source0: ftp://ftp.porcupine.org/mirrors/postfix-release/%{ftp_directory}/%{name}-%{version}.tar.bz2
 Source3: postfix-etc-init.d-postfix
@@ -417,7 +417,7 @@ exit 0
 %attr(0644, root, root) %verify(not md5 size mtime) %config(noreplace) %{_sysconfdir}/postfix/master.cf
 %attr(0644, root, root) %verify(not md5 size mtime) %config(noreplace) %{_sysconfdir}/postfix/access
 %attr(0644, root, root) %verify(not md5 size mtime) %config(noreplace) %{_sysconfdir}/postfix/aliases
-%attr(0644, root, root) %verify(not md5 size mtime) %ghost             %{_sysconfdir}/postfix/aliases.db
+%attr(0644, root, root) %verify(not md5 size mtime) %config(noreplace) %{_sysconfdir}/postfix/aliases.db
 %attr(0644, root, root) %verify(not md5 size mtime) %config(noreplace) %{_sysconfdir}/postfix/canonical
 %attr(0644, root, root) %verify(not md5 size mtime) %config(noreplace) %{_sysconfdir}/postfix/pcre_table
 %attr(0644, root, root) %verify(not md5 size mtime) %config(noreplace) %{_sysconfdir}/postfix/regexp_table
@@ -508,6 +508,9 @@ exit 0
 %{_mandir}/*/*
 
 %changelog
+* Wed Jul 24 2002 Karsten Hopp <karsten@redhat.de>
+- make aliases.db config(noreplace) (#69612)
+
 * Tue Jul 23 2002 Karsten Hopp <karsten@redhat.de>
 - postfix has its own filelist, remove LICENSE entry from it (#69069)
 
