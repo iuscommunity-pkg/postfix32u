@@ -1,17 +1,26 @@
-%define copy_cmd copy() { ln -f "$1" "$2" 2>/dev/null || cp -df "$1" "$2"; }
-%define ROOT /var/spool/postfix
-
-%define LDAP 0
+%define LDAP 2
 %define MYSQL 0
 %define PCRE 1
-%define SASL 1
+%define SASL 2
 %define TLS 1
-%define SMTPD_MULTILINE_GREETING 1
 %define POSTDROP_GID 90
+
+# On Redhat 8.0.1 and earlier, LDAP is compiled with SASL V1 and won't work
+# if postfix is compiled with SASL V2. So we drop to SASL V1 if LDAP is
+# requested but use the preferred SASL V2 if LDAP is not requested.
+# Sometime soon LDAP will build agains SASL V2 and this won't be needed.
+
+%if %{LDAP} <= 1 && %{SASL} >= 2
+%undefine SASL
+%define SASL 1
+%endif
+
+# Do we use db3 or db4 ? If we have db4, assume db4, otherwise db3.
+%define dbver db4
 
 # If set to 1 if official version, 0 if snapshot
 %define official 1 
-%define ver 1.1.12
+%define ver 2.0.11
 %define releasedate 20020624
 %define alternatives 1
 %if %{official}
@@ -21,8 +30,10 @@ Version: %{ver}
 Version: %{ver}-%{releasedate}
 %define ftp_directory experimental
 %endif
+Release: 5
+Epoch: 2
 
-%define tlsno pfixtls-0.8.11a-1.1.11-0.9.6d
+%define tlsno pfixtls-0.8.13-2.0.10-0.9.7b
 
 # Postfix requires one exlusive uid/gid and a 2nd exclusive gid for its own
 # use.  Let me know if the second gid collides with another package.
@@ -31,6 +42,7 @@ Version: %{ver}-%{releasedate}
 %define postfix_gid    89
 %define maildrop_group postdrop
 %define maildrop_gid   %{POSTDROP_GID}
+%define docdir %{_docdir}/%{name}-%{version}
 
 Name: postfix
 Group: System Environment/Daemons
@@ -44,36 +56,39 @@ PreReq: /usr/sbin/alternatives
 Obsoletes: sendmail exim qmail
 %endif
 PreReq: %{_sbindir}/groupadd, %{_sbindir}/useradd
-Epoch: 2
 Provides: MTA smtpd smtpdaemon /usr/bin/newaliases
-Release: 1
 Summary: Postfix Mail Transport Agent
 Source0: ftp://ftp.porcupine.org/mirrors/postfix-release/%{ftp_directory}/%{name}-%{version}.tar.gz
 Source3: postfix-etc-init.d-postfix
 Source5: postfix-aliases
-Source6: postfix-chroot-setup.awk
-Source9: ftp://ftp.aet.tu-cottbus.de/pub/postfix_tls/%{tlsno}.tar.bz2
-Source10: postfix-smtpd.conf
-Source11: README-Postifx-SASL-RedHat.txt
+Source9: ftp://ftp.aet.tu-cottbus.de/pub/postfix_tls/%{tlsno}.tar.gz
+Source11: README-Postfix-SASL-RedHat.txt
+# Sources >= 100 are config files
+Source100: postfix-sasl.conf
+Source101: postfix-pam.conf
+Source102: postfix-saslauthd.conf
 Patch1: postfix-config.patch
 Patch2: postfix-smtp_sasl_proto.c.patch
 Patch3: postfix-alternatives.patch
-Patch4: postfix-1.1.4-sasl2-patch
-Patch5: postfix-1.1.12-resolve.patch
 
 # Optional patches - set the appropriate environment variables to include
 #                    them when building the package/spec file
 
-# applied if %SMTPD_MULTILINE_GREETING=1
-Patch99: postfix-smtpd_multiline_greeting.patch
-
 BuildRoot: %{_tmppath}/%{name}-buildroot
 
 # Determine the different packages required for building postfix
-BuildRequires: gawk, perl, sed, ed, db4-devel, pkgconfig
+BuildRequires: gawk, perl, sed, ed, %{dbver}-devel, pkgconfig
+
+Requires: %{dbver}
 
 %if %{LDAP}
-BuildRequires: openldap >= 1.2.9, openldap-devel >= 1.2.9
+BuildRequires: openldap >= 2.0.27, openldap-devel >= 2.0.27
+Requires: openldap >= 2.0.27
+%endif
+
+%if %{SASL}
+BuildRequires: cyrus-sasl >= 2.1.10, cyrus-sasl-devel >= 2.1.10
+Requires: cyrus-sasl  >= 2.1.10
 %endif
 
 %if %{PCRE}
@@ -86,21 +101,16 @@ Requires: mysql, mysqlclient9
 BuildRequires: mysql, mysqlclient9, mysql-devel
 %endif
 
-%if %{SASL}
-Requires: cyrus-sasl
-BuildRequires: cyrus-sasl, cyrus-sasl-devel
-%endif
-
 %if %{TLS}
 Requires: openssl
-BuildRequires: openssl-devel
+BuildRequires: openssl-devel >= 0.9.6
 %endif
 
 Provides: /usr/sbin/sendmail /usr/bin/mailq /usr/bin/rmail
 
 %description
 Postfix is a Mail Transport Agent (MTA), supporting LDAP, SMTP AUTH (SASL),
-TLS and running in a chroot environment.
+TLS
 
 %prep
 umask 022
@@ -109,40 +119,20 @@ umask 022
 # Apply the TLS patch, must be at first, because the changes of master.cf
 %if %{TLS}
 patch -p1 <%{tlsno}/pfixtls.diff
+%patch1 -p1 -b .config
+%else
+# Without the TLS patch the context lines in this patch don't match.
+# Set fuzz to ignore all context lines, this is a bit dangerous.
+patch --fuzz=3 -p1 -b -z .config < %{P:1}
 %endif
 
 # Apply obligatory patches
-%patch1 -p1 -b .config
 %patch2 -p1 -b .auth
 %if %alternatives
 %patch3 -p1 -b .alternatives
 %endif
 
-# Apply the SASL2 patch to make postfix work correctly with SASL2.
-%patch4 -p1 -b .sasl2
-
-# Fix issue with malformed addresses
-%patch5 -p1 -b .headers
-
 # Apply optional patches
-
-# Apply my SMTPD Multiline greeting patch
-%if %{SMTPD_MULTILINE_GREETING}
-%patch99 -p1 -b .multiline
-%endif
-
-# Move around the TLS docs
-%if %{TLS}
-mkdir html/TLS
-mv %{tlsno}/doc/* html/TLS
-for i in ACKNOWLEDGEMENTS CHANGES INSTALL README TODO; do
-  mv %{tlsno}/$i $i.TLS
-done
-%endif
-
-# setup master.cf to be chrooted
-mv conf/master.cf conf/master.cf-nochroot
-awk -f %{_sourcedir}/postfix-chroot-setup.awk < conf/master.cf-nochroot > conf/master.cf
 
 %build
 umask 022
@@ -156,7 +146,7 @@ CCARGS="${CCARGS} -fsigned-char"
 
 %if %{LDAP}
   CCARGS="${CCARGS} -DHAS_LDAP"
-  AUXLIBS="${AUXLIBS} -L/usr/%{_lib} -lldap -llber"
+  AUXLIBS="${AUXLIBS} -L%{_libdir} -lldap -llber"
 %endif
 %if %{PCRE}
   # -I option required for pcre 3.4 (and later?)
@@ -165,11 +155,19 @@ CCARGS="${CCARGS} -fsigned-char"
 %endif
 %if %{MYSQL}
   CCARGS="${CCARGS} -DHAS_MYSQL -I/usr/include/mysql"
-  AUXLIBS="${AUXLIBS} -L/usr/%{_lib}/mysql -lmysqlclient -lm"
+  AUXLIBS="${AUXLIBS} -L%{_libdir}/mysql -lmysqlclient -lm"
 %endif
 %if %{SASL}
+  %define sasl_lib_dir %{_libdir}/sasl2
   CCARGS="${CCARGS} -DUSE_SASL_AUTH"
-  AUXLIBS="${AUXLIBS} -lsasl"
+  %if %{SASL} <= 1
+    %define sasl_lib_dir %{_libdir}/sasl
+    AUXLIBS="${AUXLIBS} -L%{sasl_lib_dir} -lsasl"
+  %else
+    %define sasl_lib_dir %{_libdir}/sasl2
+    CCARGS="${CCARGS} -I/usr/include/sasl"
+    AUXLIBS="${AUXLIBS} -L%{sasl_lib_dir} -lsasl2"
+  %endif
 %endif
 %if %{TLS}
   if pkg-config openssl ; then
@@ -205,11 +203,17 @@ sh postfix-install -non-interactive \
        mail_owner=postfix \
        setgid_group=%{maildrop_group} \
        manpage_directory=%{_mandir} \
-       sample_directory=/samples \
-       readme_directory=%{_docdir}/%{name}-%{version}/README_FILES || exit 1
+       sample_directory=%{docdir}/samples \
+       readme_directory=%{docdir}/README_FILES || exit 1
 
-rm -fr ./samples
-mv $RPM_BUILD_ROOT/samples .
+# Move around the TLS docs
+%if %{TLS}
+mkdir -p $RPM_BUILD_ROOT%{docdir}/TLS
+cp %{tlsno}/doc/* $RPM_BUILD_ROOT%{docdir}/TLS
+for i in ACKNOWLEDGEMENTS CHANGES INSTALL README TODO; do
+  cp %{tlsno}/$i $RPM_BUILD_ROOT%{docdir}/TLS
+done
+%endif
 
 # Change alias_maps and alias_database default directory to %{_sysconfdir}/postfix
 bin/postconf -c $RPM_BUILD_ROOT%{_sysconfdir}/postfix -e \
@@ -221,11 +225,6 @@ bin/postconf -c $RPM_BUILD_ROOT%{_sysconfdir}/postfix -e \
 /bin/mkdir -p $RPM_BUILD_ROOT/etc/rc.d/init.d
 install -c %{_sourcedir}/postfix-etc-init.d-postfix \
                   $RPM_BUILD_ROOT/etc/rc.d/init.d/postfix
-
-# These set up the chroot directory structure
-mkdir -p $RPM_BUILD_ROOT%{_var}/spool/postfix/etc
-mkdir -p $RPM_BUILD_ROOT%{_var}/spool/postfix/%{_lib}
-mkdir -p $RPM_BUILD_ROOT%{_var}/spool/postfix/usr/%{_lib}/zoneinfo
 
 install -c auxiliary/rmail/rmail $RPM_BUILD_ROOT%{_bindir}/rmail
 
@@ -260,11 +259,16 @@ q
 EOF
 
 # Install the smtpd.conf file for SASL support.
-mkdir -p $RPM_BUILD_ROOT%{_libdir}/sasl
-install -m 644 %SOURCE10 $RPM_BUILD_ROOT%{_libdir}/sasl/smtpd.conf
+mkdir -p $RPM_BUILD_ROOT%{sasl_lib_dir}
+install -m 644 %SOURCE100 $RPM_BUILD_ROOT%{sasl_lib_dir}/smtpd.conf
+mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/pam.d
+install -m 644 %SOURCE101 $RPM_BUILD_ROOT%{_sysconfdir}/pam.d/smtp.postfix
+mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig
+install -m 644 %SOURCE102 $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/saslauthd
 
 # Install Postfix Red Hat HOWTO.
-cp %{SOURCE11} .
+mkdir -p $RPM_BUILD_ROOT%{docdir}
+install -c %{SOURCE11} $RPM_BUILD_ROOT%{docdir}
 
 # remove LICENSE file from /etc/postfix (it's still in docdir)
 rm -f $RPM_BUILD_ROOT%{_sysconfdir}/postfix/LICENSE
@@ -290,61 +294,21 @@ sh %{_sysconfdir}/postfix/post-install \
 	mail_owner=postfix \
 	setgid_group=%{maildrop_group} \
 	manpage_directory=%{_mandir} \
-	sample_directory=%{_docdir}/%{name}-%{version}/samples \
-	readme_directory=%{_docdir}/%{name}-%{version}/README_FILES \
+	sample_directory=%{docdir}/samples \
+	readme_directory=%{docdir}/README_FILES \
 	upgrade-package
-
-# setup chroot config
-mkdir -p %{ROOT}/etc
-[ -e /etc/localtime ] && cp /etc/localtime %{ROOT}/etc
 
 %if %alternatives
 /usr/sbin/alternatives --install %{_sbindir}/sendmail mta %{_sbindir}/sendmail.postfix 30 \
         --slave %{_bindir}/mailq mta-mailq %{_bindir}/mailq.postfix \
         --slave %{_bindir}/newaliases mta-newaliases %{_bindir}/newaliases.postfix \
+        --slave %{_sysconfdir}/pam.d/smtp mta-pam %{_sysconfdir}/pam.d/smtp.postfix \
         --slave %{_bindir}/rmail mta-rmail %{_bindir}/rmail.postfix \
         --slave %{_mandir}/man1/mailq.1.gz mta-mailqman %{_mandir}/man1/mailq.postfix.1.gz \
         --slave %{_mandir}/man1/newaliases.1.gz mta-newaliasesman %{_mandir}/man1/newaliases.postfix.1.gz \
         --slave %{_mandir}/man5/aliases.5.gz mta-aliasesman %{_mandir}/man5/aliases.postfix.5.gz \
 	--initscript postfix
 %endif
-
-# Generate chroot jails on the fly when needed things are installed/upgraded
-%triggerin -- glibc
-%{copy_cmd}
-# Kill off old versions
-rm -rf %{ROOT}/%{_lib}/libnss* %{ROOT}/%{_lib}/libresolv*
-# Copy the relevant parts in
-LIBCVER=`ls -l /%{_lib}/libc.so.6* | sed "s/.*libc-\(.*\).so$/\1/g"`
-for i in compat dns files hesiod nis nisplus ; do
-	[ -e /%{_lib}/libnss_$i-${LIBCVER}.so ] && copy /%{_lib}/libnss_$i-${LIBCVER}.so %{ROOT}/%{_lib}
-	[ -e /%{_lib}/libnss_$i.so ] && copy /%{_lib}/libnss_$i.so %{ROOT}/%{_lib}
-done
-copy /%{_lib}/libresolv-${LIBCVER}.so %{ROOT}/%{_lib}
-ldconfig -n %{ROOT}/%{_lib}
-
-%if %{LDAP}
-%triggerin -- openldap
-rm -rf %{ROOT}/usr/%{_lib}/liblber* %{ROOT}/usr/%{_lib}/libldap*
-%{copy_cmd}
-copy /usr/%{_lib}/liblber.so.2 %{ROOT}/usr/%{_lib}
-copy /usr/%{_lib}/libldap_r.so.2 %{ROOT}/usr/%{_lib}
-copy /usr/%{_lib}/libldap.so.2 %{ROOT}/usr/%{_lib}
-ldconfig -n %{ROOT}/usr/%{_lib}
-%endif
-
-%triggerin -- setup
-rm -f %{ROOT}/etc/services
-%{copy_cmd}
-copy /etc/services %{ROOT}/etc
-
-# Put db4 in the chroot jail, but only if the soname is correct
-%triggerin -- db4
-%{copy_cmd}
-DBVER=`ldd %{_libexecdir}/postfix/pickup |grep libdb |sed "s,[[:blank:]],,g;s,=>.*,,"`
-if [ -e "/%{_lib}/$DBVER" ]; then
-	copy "/%{_lib}/$DBVER" %{ROOT}/%{_lib}
-fi
 
 %pre
 # Add user and groups if necessary
@@ -357,33 +321,6 @@ exit 0
 %preun
 umask 022
 
-# selectively remove the rest of the queue directory structure
-# first remove the "queues" (and assume the hash depth is still 2)
-queue_directory_remove () {
-    for dir in active bounce defer deferred flush incoming; do
-        for a in 0 1 2 3 4 5 6 7 8 9 A B C D E F; do
-   	    test -d $dir/$a && {
-	        for b in 0 1 2 3 4 5 6 7 8 9 A B C D E F; do
-		    test -d $dir/$a/$b && (
-		        /bin/rm -f $dir/$a/$b/*
-		        /bin/rmdir $dir/$a/$b
-		    )
-		done
-		/bin/rmdir $dir/$a || echo "WARNING: preun - unable to remove directory %{_var}/spool/postfix/$dir/$a"
-	    }
-        done
-	/bin/rmdir $dir || echo "WARNING: preun - unable to remove directory %{_var}/spool/postfix/$dir"
-    done
-
-    # now remove the other directories
-    for dir in corrupt maildrop pid private public saved; do
-        test -d $dir && {
-            /bin/rm -f $dir/*
-            /bin/rmdir $dir || echo "WARNING: preun - unable to remove directory %{_var}/spool/postfix/$dir"
-        }
-    done
-}
-
 if [ "$1" = 0 ]; then
     # stop postfix silently, but only if it's running
     /sbin/service postfix stop &>/dev/null
@@ -392,17 +329,8 @@ if [ "$1" = 0 ]; then
     /usr/sbin/alternatives --remove mta %{_sbindir}/sendmail.postfix
 %endif
 
-    cd %{_var}/spool/postfix && {
-        # Clean up chroot environment
-	rm -rf %{ROOT}/%{_lib} %{ROOT}/usr %{ROOT}/etc
-        queue_directory_remove
-    }
 fi
 
-# Remove unneeded symbolic links
-for i in samples; do
-  test -L %{_sysconfdir}/postfix/$i && rm %{_sysconfdir}/postfix/$i
-done
 exit 0
 
 %postun
@@ -417,6 +345,11 @@ exit 0
 
 %files
 %defattr(-, root, root)
+
+%config(noreplace) %{sasl_lib_dir}/smtpd.conf
+%config(noreplace) %{_sysconfdir}/pam.d/smtp.postfix
+%config(noreplace) %{_sysconfdir}/sysconfig/saslauthd
+
 %verify(not md5 size mtime) %config %dir %{_sysconfdir}/postfix
 %attr(0755, root, root) %config %{_sysconfdir}/postfix/postfix-script
 %attr(0755, root, root) %config %{_sysconfdir}/postfix/post-install
@@ -439,11 +372,6 @@ exit 0
 
 %attr(0755, root, root) %config /etc/rc.d/init.d/postfix
 
-%dir                      %verify(not md5 size mtime) %{_var}/spool/postfix
-%dir %attr(-, root, root) %verify(not md5 size mtime) %{_var}/spool/postfix/etc
-%dir %attr(-, root, root) %verify(not md5 size mtime) %{_var}/spool/postfix/%{_lib}
-%attr(-, root, root)      %verify(not md5 size mtime) %{_var}/spool/postfix/usr
-
 # For correct directory permissions check postfix-install script
 %dir %attr(0700, postfix, root)     %verify(not md5 size mtime) %{_var}/spool/postfix/active
 %dir %attr(0700, postfix, root)     %verify(not md5 size mtime) %{_var}/spool/postfix/bounce
@@ -460,15 +388,7 @@ exit 0
 
 %dir %attr(0755, root, root)        %verify(not md5 size mtime) %{_var}/spool/postfix/pid
 
-%doc 0README COMPATIBILITY HISTORY INSTALL LICENSE PORTING RELEASE_NOTES README-Postifx-SASL-RedHat.txt
-%if %{TLS}
-%doc ACKNOWLEDGEMENTS.TLS CHANGES.TLS README.TLS TODO.TLS html/TLS/*
-%endif
-%doc html
-%doc samples
-%doc README_FILES
-
-%{_libdir}/sasl/smtpd.conf
+%doc %{docdir}
 
 %dir %attr(0755, root, root) %verify(not md5 size mtime) %{_libexecdir}/postfix
 %{_libexecdir}/postfix/bounce
@@ -481,6 +401,7 @@ exit 0
 %{_libexecdir}/postfix/nqmgr
 %{_libexecdir}/postfix/pickup
 %{_libexecdir}/postfix/pipe
+%{_libexecdir}/postfix/proxymap
 %{_libexecdir}/postfix/qmgr
 %{_libexecdir}/postfix/qmqpd
 %{_libexecdir}/postfix/showq
@@ -517,8 +438,28 @@ exit 0
 %{_mandir}/*/*
 
 %changelog
-* Mon Jul 28 2003 Bill Nottingham <notting@redhat.com> 2:1.1.12-1
-- update to 1.1.12, add a patch from the author
+* Tue Jul 22 2003 Nalin Dahyabhai <nalin@redhat.com> 2.0.11-5
+- rebuild
+
+* Thu Jun 26 2003 John Dennis <jdennis@finch.boston.redhat.com>
+- bug 98095, change rmail.postfix to rmail for uucp invocation in master.cf
+
+* Wed Jun 25 2003 John Dennis <jdennis@finch.boston.redhat.com>
+- add missing dependency for db3/db4
+
+* Thu Jun 19 2003 John Dennis <jdennis@finch.boston.redhat.com>
+- upgrade to new 2.0.11 upstream release
+- fix authentication problems
+- rewrite SASL documentation
+- upgrade to use SASL version 2
+- Fix bugs 75439, 81913 90412, 91225, 78020, 90891, 88131
+
+* Wed Jun 04 2003 Elliot Lee <sopwith@redhat.com>
+- rebuilt
+
+* Fri Mar  7 2003 John Dennis <jdennis@finch.boston.redhat.com>
+- upgrade to release 2.0.6
+- remove chroot as this is now the preferred installation according to Wietse Venema, the postfix author
 
 * Mon Feb 24 2003 Elliot Lee <sopwith@redhat.com>
 - rebuilt
