@@ -46,7 +46,7 @@ Obsoletes: sendmail exim qmail
 PreReq: %{_sbindir}/groupadd, %{_sbindir}/useradd
 Epoch: 2
 Provides: MTA smtpd smtpdaemon
-Release: 1
+Release: 2
 Summary: Postfix Mail Transport Agent
 Source0: ftp://ftp.porcupine.org/mirrors/postfix-release/%{ftp_directory}/%{name}-%{version}.tar.bz2
 Source3: postfix-etc-init.d-postfix
@@ -306,11 +306,20 @@ rm -f %{ROOT}/etc/services
 %{copy_cmd}
 copy /etc/services %{ROOT}/etc
 
+# Put db3 in the chroot jail, but only if the soname is correct
+%triggerin -- db3
+%{copy_cmd}
+DBVER=`ldd %{_libexecdir}/postfix/pickup |grep libdb |perl -pi -e "s,\s+,,g;s,=>.*,,"`
+if [ -e "/lib/$DBVER" ]; then
+	copy "/lib/$DBVER" %{ROOT}/lib
+fi
+
 %pre
 # Add user and groups if necessary
 %{_sbindir}/groupadd -g %{maildrop_gid} -r %{maildrop_group} 2>/dev/null || :
 %{_sbindir}/groupadd -g %{postfix_gid} -r postfix 2>/dev/null || :
-%{_sbindir}/useradd -d %{_var}/spool/postfix -s /bin/true -g postfix -M -r -u %{postfix_uid} postfix 2>/dev/null || :
+%{_sbindir}/groupadd -g 12 -r mail 2>/dev/null || :
+%{_sbindir}/useradd -d %{_var}/spool/postfix -s /bin/true -g postfix -G mail -M -r -u %{postfix_uid} postfix 2>/dev/null || :
 
 %preun
 umask 022
@@ -473,6 +482,10 @@ exit 0
 %{_mandir}/*/*
 
 %changelog
+* Mon Apr 15 2002 Bernhard Rosenkraenzer <bero@redhat.com> 1.1.7-2
+- Fix bugs #62358 and #62783
+- Make sure libdb-3.3.so is in the chroot jail (#62906)
+
 * Mon Apr  8 2002 Bernhard Rosenkraenzer <bero@redhat.com> 1.1.7-1
 - 1.1.7, fixes 2 critical bugs
 - Make sure there's a resolv.conf in the chroot jail

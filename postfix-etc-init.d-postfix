@@ -10,9 +10,7 @@
 # config: /etc/postfix/main.cf
 # config: /etc/postfix/master.cf
 #
-# $Revision: 1.12 $
-#
-# Written by Package Author: Simon J Mudd <sjmudd@pobox.com>
+# Based on startup script from Simon J Mudd <sjmudd@pobox.com>
 # 25/02/99: Mostly s/sendmail/postfix/g by John A. Martin <jam@jamux.com>
 # 23/11/00: Changes & suggestions by Ajay Ramaswamy <ajayr@bigfoot.com>
 # 20/01/01: Changes to fall in line with RedHat 7.0 style
@@ -78,6 +76,11 @@ flush() {
 check() {
 	/usr/sbin/postfix check 2>/dev/null 1>&2 && success || failure
 	return $?
+}
+
+restart() {
+	stop
+	start
 }
 
 # See how we were called.
