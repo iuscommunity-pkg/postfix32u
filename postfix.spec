@@ -47,7 +47,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.1.5
-Release: 2
+Release: 2.1
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -327,10 +327,10 @@ perl -pi -e "s,/usr/local/bin/perl,/usr/bin/perl,g" $RPM_BUILD_ROOT%{postfix_doc
 %endif
 
 # Change alias_maps and alias_database default directory to %{postfix_config_dir}
-#bin/postconf -c $RPM_BUILD_ROOT%{postfix_config_dir} -e \
-#	"alias_maps = hash:/etc/aliases" \
-#	"alias_database = hash:/etc/aliases" \
-#|| exit 1
+bin/postconf -c $RPM_BUILD_ROOT%{postfix_config_dir} -e \
+	"alias_maps = hash:/etc/aliases" \
+	"alias_database = hash:/etc/aliases" \
+|| exit 1
 
 # This installs into the /etc/rc.d/init.d directory
 /bin/mkdir -p $RPM_BUILD_ROOT/etc/rc.d/init.d
@@ -354,6 +354,7 @@ done
 #   when called during package installation.
 ed $RPM_BUILD_ROOT%{postfix_config_dir}/postfix-files <<EOF || exit 1
 %s/\(\/man[158]\/.*\.[158]\):/\1.gz:/
+%s/\$config_directory\/aliases:f/\#/
 w
 q
 EOF
@@ -561,6 +562,10 @@ exit 0
 
 
 %changelog
+* Fri Oct 15 2004 Thomas Woerner <twoerner@redhat.com> 2:2.1.5-2.1
+- removed aliases from postfix-files (#135840)
+- fixed postalias call in init script
+
 * Thu Oct 14 2004 Thomas Woerner <twoerner@redhat.com> 2:2.1.5-2
 - switched over to system aliases file and database in /etc/ (#117661)
 - new reuires and buildrequires for setup >= 2.5.36-1
