@@ -11,7 +11,7 @@
 
 # If set to 1 if official version, 0 if snapshot
 %define official 1 
-%define ver 1.1.11
+%define ver 1.1.12
 %define releasedate 20020624
 %define alternatives 1
 %if %{official}
@@ -46,9 +46,9 @@ Obsoletes: sendmail exim qmail
 PreReq: %{_sbindir}/groupadd, %{_sbindir}/useradd
 Epoch: 2
 Provides: MTA smtpd smtpdaemon /usr/bin/newaliases
-Release: 11
+Release: 1
 Summary: Postfix Mail Transport Agent
-Source0: ftp://ftp.porcupine.org/mirrors/postfix-release/%{ftp_directory}/%{name}-%{version}.tar.bz2
+Source0: ftp://ftp.porcupine.org/mirrors/postfix-release/%{ftp_directory}/%{name}-%{version}.tar.gz
 Source3: postfix-etc-init.d-postfix
 Source5: postfix-aliases
 Source6: postfix-chroot-setup.awk
@@ -59,6 +59,7 @@ Patch1: postfix-config.patch
 Patch2: postfix-smtp_sasl_proto.c.patch
 Patch3: postfix-alternatives.patch
 Patch4: postfix-1.1.4-sasl2-patch
+Patch5: postfix-1.1.12-resolve.patch
 
 # Optional patches - set the appropriate environment variables to include
 #                    them when building the package/spec file
@@ -119,6 +120,9 @@ patch -p1 <%{tlsno}/pfixtls.diff
 
 # Apply the SASL2 patch to make postfix work correctly with SASL2.
 %patch4 -p1 -b .sasl2
+
+# Fix issue with malformed addresses
+%patch5 -p1 -b .headers
 
 # Apply optional patches
 
@@ -513,6 +517,9 @@ exit 0
 %{_mandir}/*/*
 
 %changelog
+* Mon Jul 28 2003 Bill Nottingham <notting@redhat.com> 2:1.1.12-1
+- update to 1.1.12, add a patch from the author
+
 * Mon Feb 24 2003 Elliot Lee <sopwith@redhat.com>
 - rebuilt
 
