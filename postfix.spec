@@ -44,7 +44,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.1.5
-Release: 4
+Release: 4.1
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -555,6 +555,9 @@ exit 0
 
 
 %changelog
+* Tue Nov 23 2004 Thomas Woerner <twoerner@redhat.com> 2:2.1.5-4.1
+- removed double quotes from postalias call, second fix for #138354
+
 * Thu Nov 11 2004 Jeff Johnson <jbj@jbj.org> 2:2.1.5-4
 - rebuild against db-4.3.21.
 - remove Requires: db4, the soname linkage dependency is sufficient.
