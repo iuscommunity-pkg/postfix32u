@@ -20,7 +20,7 @@
 
 # If set to 1 if official version, 0 if snapshot
 %define official 1 
-%define ver 2.0.11
+%define ver 2.0.16
 %define releasedate 20020624
 %define alternatives 1
 %if %{official}
@@ -30,10 +30,10 @@ Version: %{ver}
 Version: %{ver}-%{releasedate}
 %define ftp_directory experimental
 %endif
-Release: 5
+Release: 1
 Epoch: 2
 
-%define tlsno pfixtls-0.8.13-2.0.10-0.9.7b
+%define tlsno pfixtls-0.8.16-2.0.16-0.9.7b
 
 # Postfix requires one exlusive uid/gid and a 2nd exclusive gid for its own
 # use.  Let me know if the second gid collides with another package.
@@ -438,6 +438,9 @@ exit 0
 %{_mandir}/*/*
 
 %changelog
+* Mon Nov 17 2003 John Dennis <jdennis@finch.boston.redhat.com> 2:2.0.16-1
+- sync up with current upstream release, 2.0.16, fixes bug #108960
+
 * Tue Jul 22 2003 Nalin Dahyabhai <nalin@redhat.com> 2.0.11-5
 - rebuild
 
