@@ -47,7 +47,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.1.5
-Release: 2.2
+Release: 3
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -355,6 +355,8 @@ w
 q
 EOF
 
+perl -i -pe 's:/cyrus/bin/deliver:/usr/lib/cyrus-imapd/deliver:' $RPM_BUILD_ROOT%{postfix_config_dir}/master.cf
+
 cat $RPM_BUILD_ROOT%{postfix_config_dir}/postfix-files
 # Install the smtpd.conf file for SASL support.
 # See README-Postfix-SASL-RedHat.txt for why we need to set saslauthd_version
@@ -558,6 +560,9 @@ exit 0
 
 
 %changelog
+* Tue Oct 26 2004 Thomas Woerner <twoerner@redhat.com> 2:2.1.5-3
+- fixed wrong path for cyrus-imapd (#137074)
+
 * Mon Oct 18 2004 Thomas Woerner <twoerner@redhat.com> 2:2.1.5-2.2
 - automated postalias call in init script
 - removed postconf call from spec file: moved changes into patch
