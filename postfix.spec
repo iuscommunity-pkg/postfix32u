@@ -20,7 +20,7 @@
 # Do we use db3 or db4 ? If we have db4, assume db4, otherwise db3.
 %define dbver db4
 
-%define tlsno pfixtls-0.8.18-2.1.0-0.9.7d
+%define tlsno pfixtls-0.8.18-2.1.3-0.9.7d
 %if %{PFLOGSUMM}
 %define pflogsumm_ver 1.1.0
 %endif
@@ -46,8 +46,8 @@
 
 Name: postfix
 Summary: Postfix Mail Transport Agent
-Version: 2.1.1
-Release: 3.1
+Version: 2.1.4
+Release: 1
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -92,8 +92,8 @@ Source3: README-Postfix-SASL-RedHat.txt
 # original Source50 patch and doc.
 
 Source50: ftp://ftp.aet.tu-cottbus.de/pub/postfix_tls/%{tlsno}.tar.gz
-Source51: ftp://ftp.stack.nl/pub/postfix/tls+ipv6/1.21/tls+ipv6-1.24-pf-2.1.1.patch.gz
-Source52: ftp://ftp.stack.nl/pub/postfix/tls+ipv6/1.21/ipv6-1.24-pf-2.1.1.patch.gz
+Source51: ftp://ftp.stack.nl/pub/postfix/tls+ipv6/1.25/tls+ipv6-1.25-pf-2.1.4.patch.gz
+Source52: ftp://ftp.stack.nl/pub/postfix/tls+ipv6/1.25/ipv6-1.25-pf-2.1.4.patch.gz
 %if %{PFLOGSUMM}
 Source53: http://jimsun.linxnet.com/downloads/pflogsumm-%{pflogsumm_ver}.tar.gz
 %endif
@@ -566,6 +566,11 @@ exit 0
 
 
 %changelog
+* Thu Aug  5 2004 Thomas Woerner <twoerner@redhat.com> 2:2.1.4-1
+- new version 2.1.4
+- new ipv6 and tls+ipv6 patches: 1.25-pf-2.1.4
+- new pfixtls-0.8.18-2.1.3-0.9.7d patch
+
 * Mon Jun 21 2004 Thomas Woerner <twoerner@redhat.com> 2:2.1.1-3.1
 - fixed directory permissions in %%doc (#125406)
 - fixed missing spool dirs (#125460)
