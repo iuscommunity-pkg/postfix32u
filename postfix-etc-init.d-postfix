@@ -41,7 +41,7 @@ start() {
 	    echo
 	    return 0	    
 	}
-	/usr/sbin/postalias "$alias_database" 2>/dev/null
+	/usr/sbin/postalias "${alias_database//,}" 2>/dev/null
 	RETVAL=$?
 	[ $RETVAL -ne 0 ] && {
 	    failure "postalias \"$alias_database\""

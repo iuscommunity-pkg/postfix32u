@@ -47,7 +47,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.1.5
-Release: 3
+Release: 3.1
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -560,6 +560,9 @@ exit 0
 
 
 %changelog
+* Thu Nov 11 2004 Thomas Woerner <twoerner@redhat.com> 2:2.1.5-3.1
+- fixed problem with multiple alias maps (#138354)
+
 * Tue Oct 26 2004 Thomas Woerner <twoerner@redhat.com> 2:2.1.5-3
 - fixed wrong path for cyrus-imapd (#137074)
 
