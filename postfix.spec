@@ -119,6 +119,9 @@ BuildRoot: %{_tmppath}/%{name}-buildroot
 # Determine the different packages required for building postfix
 BuildRequires: gawk, perl, sed, ed, %{dbver}-devel, pkgconfig, zlib-devel
 
+Requires: setup >= 2.5.36-1
+BuildRequires: setup >= 2.5.36-1
+
 Requires: %{dbver}
 
 %if %{LDAP}
@@ -560,6 +563,7 @@ exit 0
 %changelog
 * Thu Oct 14 2004 Thomas Woerner <twoerner@redhat.com> 2:2.1.5-2
 - switched over to system aliases file and database in /etc/ (#117661)
+- new reuires and buildrequires for setup >= 2.5.36-1
 
 * Mon Oct  4 2004 Thomas Woerner <twoerner@redhat.com> 2:2.1.5-1
 - new version 2.1.5
