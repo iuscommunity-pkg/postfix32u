@@ -46,7 +46,7 @@ Obsoletes: sendmail exim qmail
 PreReq: %{_sbindir}/groupadd, %{_sbindir}/useradd
 Epoch: 2
 Provides: MTA smtpd smtpdaemon /usr/bin/newaliases
-Release: 5
+Release: 11
 Summary: Postfix Mail Transport Agent
 Source0: ftp://ftp.porcupine.org/mirrors/postfix-release/%{ftp_directory}/%{name}-%{version}.tar.bz2
 Source3: postfix-etc-init.d-postfix
@@ -69,7 +69,7 @@ Patch99: postfix-smtpd_multiline_greeting.patch
 BuildRoot: %{_tmppath}/%{name}-buildroot
 
 # Determine the different packages required for building postfix
-BuildRequires: gawk, perl, sed, ed, db4-devel
+BuildRequires: gawk, perl, sed, ed, db4-devel, pkgconfig
 
 %if %{LDAP}
 BuildRequires: openldap >= 1.2.9, openldap-devel >= 1.2.9
@@ -152,7 +152,7 @@ CCARGS="${CCARGS} -fsigned-char"
 
 %if %{LDAP}
   CCARGS="${CCARGS} -DHAS_LDAP"
-  AUXLIBS="${AUXLIBS} -L/usr/lib -lldap -llber"
+  AUXLIBS="${AUXLIBS} -L/usr/%{_lib} -lldap -llber"
 %endif
 %if %{PCRE}
   # -I option required for pcre 3.4 (and later?)
@@ -161,16 +161,20 @@ CCARGS="${CCARGS} -fsigned-char"
 %endif
 %if %{MYSQL}
   CCARGS="${CCARGS} -DHAS_MYSQL -I/usr/include/mysql"
-  AUXLIBS="${AUXLIBS} -L/usr/lib/mysql -lmysqlclient -lm"
+  AUXLIBS="${AUXLIBS} -L/usr/%{_lib}/mysql -lmysqlclient -lm"
 %endif
 %if %{SASL}
   CCARGS="${CCARGS} -DUSE_SASL_AUTH"
   AUXLIBS="${AUXLIBS} -lsasl"
 %endif
 %if %{TLS}
-  LIBS=
-  CCARGS="${CCARGS} -DHAS_SSL -I/usr/include/openssl"
-  AUXLIBS="${AUXLIBS} -lssl -lcrypto"
+  if pkg-config openssl ; then
+    CCARGS="${CCARGS} -DHAS_SSL `pkg-config --cflags openssl`"
+    AUXLIBS="${AUXLIBS} `pkg-config --libs openssl`"
+  else
+    CCARGS="${CCARGS} -DHAS_SSL -I/usr/include/openssl"
+    AUXLIBS="${AUXLIBS} -lssl -lcrypto"
+  fi
 %endif
 
 export CCARGS AUXLIBS
@@ -216,8 +220,8 @@ install -c %{_sourcedir}/postfix-etc-init.d-postfix \
 
 # These set up the chroot directory structure
 mkdir -p $RPM_BUILD_ROOT%{_var}/spool/postfix/etc
-mkdir -p $RPM_BUILD_ROOT%{_var}/spool/postfix/lib
-mkdir -p $RPM_BUILD_ROOT%{_var}/spool/postfix/usr/lib/zoneinfo
+mkdir -p $RPM_BUILD_ROOT%{_var}/spool/postfix/%{_lib}
+mkdir -p $RPM_BUILD_ROOT%{_var}/spool/postfix/usr/%{_lib}/zoneinfo
 
 install -c auxiliary/rmail/rmail $RPM_BUILD_ROOT%{_bindir}/rmail
 
@@ -259,7 +263,7 @@ install -m 644 %SOURCE10 $RPM_BUILD_ROOT%{_libdir}/sasl/smtpd.conf
 cp %{SOURCE11} .
 
 # remove LICENSE file from /etc/postfix (it's still in docdir)
-rm -f $RPM_BUILD_ROOT%{_sysconfdir}/postfix/LICENSE ||:
+rm -f $RPM_BUILD_ROOT%{_sysconfdir}/postfix/LICENSE
 ed $RPM_BUILD_ROOT%{_sysconfdir}/postfix/postfix-files <<EOF || exit 1
 g/LICENSE/d
 w
@@ -305,24 +309,24 @@ mkdir -p %{ROOT}/etc
 %triggerin -- glibc
 %{copy_cmd}
 # Kill off old versions
-rm -rf %{ROOT}/lib/libnss* %{ROOT}/lib/libresolv*
+rm -rf %{ROOT}/%{_lib}/libnss* %{ROOT}/%{_lib}/libresolv*
 # Copy the relevant parts in
-LIBCVER=`ls -l /lib/libc.so.6* | sed "s/.*libc-\(.*\).so$/\1/g"`
-for i in compat dns files hesiod nis nisplus winbind wins; do
-	[ -e /lib/libnss_$i-${LIBCVER}.so ] && copy /lib/libnss_$i-${LIBCVER}.so %{ROOT}/lib
-	[ -e /lib/libnss_$i.so ] && copy /lib/libnss_$i.so %{ROOT}/lib
+LIBCVER=`ls -l /%{_lib}/libc.so.6* | sed "s/.*libc-\(.*\).so$/\1/g"`
+for i in compat dns files hesiod nis nisplus ; do
+	[ -e /%{_lib}/libnss_$i-${LIBCVER}.so ] && copy /%{_lib}/libnss_$i-${LIBCVER}.so %{ROOT}/%{_lib}
+	[ -e /%{_lib}/libnss_$i.so ] && copy /%{_lib}/libnss_$i.so %{ROOT}/%{_lib}
 done
-copy /lib/libresolv-${LIBCVER}.so %{ROOT}/lib
-ldconfig -n %{ROOT}/lib
+copy /%{_lib}/libresolv-${LIBCVER}.so %{ROOT}/%{_lib}
+ldconfig -n %{ROOT}/%{_lib}
 
 %if %{LDAP}
 %triggerin -- openldap
-rm -rf %{ROOT}/usr/lib/liblber* %{ROOT}/usr/lib/libldap*
+rm -rf %{ROOT}/usr/%{_lib}/liblber* %{ROOT}/usr/%{_lib}/libldap*
 %{copy_cmd}
-copy /usr/lib/liblber.so.2 %{ROOT}/usr/lib
-copy /usr/lib/libldap_r.so.2 %{ROOT}/usr/lib
-copy /usr/lib/libldap.so.2 %{ROOT}/usr/lib
-ldconfig -n %{ROOT}/usr/lib
+copy /usr/%{_lib}/liblber.so.2 %{ROOT}/usr/%{_lib}
+copy /usr/%{_lib}/libldap_r.so.2 %{ROOT}/usr/%{_lib}
+copy /usr/%{_lib}/libldap.so.2 %{ROOT}/usr/%{_lib}
+ldconfig -n %{ROOT}/usr/%{_lib}
 %endif
 
 %triggerin -- setup
@@ -334,16 +338,17 @@ copy /etc/services %{ROOT}/etc
 %triggerin -- db4
 %{copy_cmd}
 DBVER=`ldd %{_libexecdir}/postfix/pickup |grep libdb |sed "s,[[:blank:]],,g;s,=>.*,,"`
-if [ -e "/lib/$DBVER" ]; then
-	copy "/lib/$DBVER" %{ROOT}/lib
+if [ -e "/%{_lib}/$DBVER" ]; then
+	copy "/%{_lib}/$DBVER" %{ROOT}/%{_lib}
 fi
 
 %pre
 # Add user and groups if necessary
-%{_sbindir}/groupadd -g %{maildrop_gid} -r %{maildrop_group} 2>/dev/null || :
-%{_sbindir}/groupadd -g %{postfix_gid} -r postfix 2>/dev/null || :
-%{_sbindir}/groupadd -g 12 -r mail 2>/dev/null || :
-%{_sbindir}/useradd -d %{_var}/spool/postfix -s /sbin/nologin -g postfix -G mail -M -r -u %{postfix_uid} postfix 2>/dev/null || :
+%{_sbindir}/groupadd -g %{maildrop_gid} -r %{maildrop_group} 2>/dev/null
+%{_sbindir}/groupadd -g %{postfix_gid} -r postfix 2>/dev/null
+%{_sbindir}/groupadd -g 12 -r mail 2>/dev/null
+%{_sbindir}/useradd -d %{_var}/spool/postfix -s /sbin/nologin -g postfix -G mail -M -r -u %{postfix_uid} postfix 2>/dev/null
+exit 0
 
 %preun
 umask 022
@@ -385,16 +390,16 @@ if [ "$1" = 0 ]; then
 
     cd %{_var}/spool/postfix && {
         # Clean up chroot environment
-	rm -rf %{ROOT}/lib %{ROOT}/usr %{ROOT}/etc
+	rm -rf %{ROOT}/%{_lib} %{ROOT}/usr %{ROOT}/etc
         queue_directory_remove
     }
-    true # to ensure we exit safely
 fi
 
 # Remove unneeded symbolic links
 for i in samples; do
-  test -L %{_sysconfdir}/postfix/$i && rm %{_sysconfdir}/postfix/$i || true
+  test -L %{_sysconfdir}/postfix/$i && rm %{_sysconfdir}/postfix/$i
 done
+exit 0
 
 %postun
 if [ "$1" != 0 ]; then
@@ -432,7 +437,7 @@ exit 0
 
 %dir                      %verify(not md5 size mtime) %{_var}/spool/postfix
 %dir %attr(-, root, root) %verify(not md5 size mtime) %{_var}/spool/postfix/etc
-%dir %attr(-, root, root) %verify(not md5 size mtime) %{_var}/spool/postfix/lib
+%dir %attr(-, root, root) %verify(not md5 size mtime) %{_var}/spool/postfix/%{_lib}
 %attr(-, root, root)      %verify(not md5 size mtime) %{_var}/spool/postfix/usr
 
 # For correct directory permissions check postfix-install script
@@ -508,6 +513,31 @@ exit 0
 %{_mandir}/*/*
 
 %changelog
+* Mon Feb 24 2003 Elliot Lee <sopwith@redhat.com>
+- rebuilt
+
+* Tue Feb 18 2003 Bill Nottingham <notting@redhat.com> 2:1.1.11-10
+- don't copy winbind/wins nss modules, fixes #84553
+
+* Sat Feb 01 2003 Florian La Roche <Florian.LaRoche@redhat.de>
+- sanitize rpm scripts a bit
+
+* Wed Jan 22 2003 Tim Powers <timp@redhat.com>
+- rebuilt
+
+* Sat Jan 11 2003 Karsten Hopp <karsten@redhat.de> 2:1.1.11-8
+- rebuild to fix krb5.h issue
+
+* Tue Jan  7 2003 Nalin Dahyabhai <nalin@redhat.com> 2:1.1.11-7
+- rebuild
+
+* Fri Jan  3 2003 Nalin Dahyabhai <nalin@redhat.com>
+- if pkgconfig knows about openssl, use its cflags and linker flags
+
+* Thu Dec 12 2002 Tim Powers <timp@redhat.com> 2:1.1.11-6
+- lib64'ize
+- build on all arches
+
 * Wed Jul 24 2002 Karsten Hopp <karsten@redhat.de>
 - make aliases.db config(noreplace) (#69612)
 
