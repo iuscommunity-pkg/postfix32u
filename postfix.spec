@@ -17,7 +17,6 @@
 %define SASL 1
 %endif
 
-%define tlsno pfixtls-0.8.18-2.1.3-0.9.7d
 %if %{PFLOGSUMM}
 %define pflogsumm_ver 1.1.0
 %endif
@@ -43,8 +42,8 @@
 
 Name: postfix
 Summary: Postfix Mail Transport Agent
-Version: 2.1.5
-Release: 5.1
+Version: 2.2.1
+Release: 1
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -63,36 +62,8 @@ Source3: README-Postfix-SASL-RedHat.txt
 
 # Sources 50-99 are upstream [patch] contributions
 
-# A note about the various TLS and IPV6 patch files. TLS was
-# originally added to Postfix by Lutz Jaenicke, this is what is in
-# Source50. In addition to the source patch it includes documentation
-# and examples. Dean Strik created a patch to support IPv6, this was
-# taken from the work done by Mark Huizer, and then substantially
-# improved by Jun-ichiro 'itojun' Hagino (known as the KAME
-# patch). Dean provides his patch in two forms, one with IPv6 only (Source52),
-# and one with IPv6 and TLS (Source51). The TLS support in Dean Stick's patch
-# comes from the TLS patch done by Lutz Jaenicke. However Dean Strick
-# did not include the TLS documentation and examples that are in Lutz
-# Jaenicke's tarball. Depending on what this RPM builds we use some
-# combination of patches and files from Sources 50-52.
-#
-# The TLS documentation and examples always comes from Source50, the
-# Lutz Jaenicke contribution. We can do this because even if we don't
-# use this patch to add TLS, but rather use Dean Strik's tls+ipv6
-# patch is still based on Lutz Jaenicke's contribution.
-#
-# If we are building with IPv6 and no TLS then Source52 is used. If we
-# are building with both IPv6 and TLS then Source51 is used and we
-# include the doc and examples from Source50, but not Source50's
-# patch. If we are building with TLS and no IPv6 then we use the
-# original Source50 patch and doc.
-
-Source50: ftp://ftp.aet.tu-cottbus.de/pub/postfix_tls/%{tlsno}.tar.gz
-Source51: ftp://ftp.stack.nl/pub/postfix/tls+ipv6/1.26/tls+ipv6-1.26-pf-2.1.5.patch.gz
-Source52: ftp://ftp.stack.nl/pub/postfix/tls+ipv6/1.26/ipv6-1.26-pf-2.1.5.patch.gz
-%if %{PFLOGSUMM}
+# Postfix Log Entry Summarizer: http://jimsun.linxnet.com/postfix_contrib.html
 Source53: http://jimsun.linxnet.com/downloads/pflogsumm-%{pflogsumm_ver}.tar.gz
-%endif
 
 # Sources >= 100 are config files
 
@@ -102,7 +73,6 @@ Source101: postfix-pam.conf
 # Patches
 
 Patch1: postfix-2.1.1-config.patch
-Patch2: postfix-smtp_sasl_proto.c.patch
 Patch3: postfix-alternatives.patch
 Patch4: postfix-hostname-fqdn.patch
 Patch5: postfix-2.1.1-pie.patch
@@ -155,54 +125,8 @@ TLS
 umask 022
 
 %setup -q
-#
-# IPv6 and TLS are sort of hand in hand. We need to apply them in the
-# following order:
-# - IPv6 + TLS (if both are enabled)
-# - IPv6 only
-# - TLS only
-# The last else block with patch fuzz factor enabled fixes master.cf
-# by force if we're compiling without TLS
-#
-%if %{IPV6} && %{TLS}
-echo "TLS and IPv6, patching with %{SOURCE51}"
-gzip -dc %{SOURCE51} | patch -p1 -b -z .ipv6tls
-%endif
-
-%if %{IPV6} && !%{TLS}
-echo "IPv6 Only, patching with %{SOURCE52}"
-gzip -dc %{SOURCE52} | patch -p1 -b -z .ipv6
-%endif
-
-%if %{TLS}
-# It does not matter which TLS patch we are using, we always need the
-# doc and examples from Lutz Jaenicke tarball so unpack it now.
-gzip -dc %{SOURCE50} | tar xf -
-if [ $? -ne 0 ]; then
-  exit $?
-fi
-%endif
-
-%if %{IPV6} && %{TLS}
-# TLS and IPv6
-%patch1 -p1 -b .config
-%endif
-
-%if !%{IPV6} && %{TLS}
-echo "TLS Only, patching with %{tlsno}/pfixtls.diff"
-patch -p1 < %{tlsno}/pfixtls.diff
-%patch1 -p1 -b .config
-%endif
-
-%if !%{IPV6} && !%{TLS}
-# No TLS. Without the TLS patch the context lines in this patch don't
-# match. Set fuzz to ignore all context lines, this is a bit
-# dangerous.
-patch --fuzz=3 -p1 -b -z .config < %{P:1}
-%endif
-
 # Apply obligatory patches
-%patch2 -p1 -b .auth
+%patch1 -p1 -b .config
 %patch3 -p1 -b .alternatives
 %patch4 -p1 -b .postfix-hostname-fqdn
 %patch5 -p1 -b .pie
@@ -266,12 +190,15 @@ CCARGS="${CCARGS} -fsigned-char"
 %endif
 %if %{TLS}
   if pkg-config openssl ; then
-    CCARGS="${CCARGS} -DHAS_SSL `pkg-config --cflags openssl`"
+    CCARGS="${CCARGS} -DUSE_TLS `pkg-config --cflags openssl`"
     AUXLIBS="${AUXLIBS} `pkg-config --libs openssl`"
   else
-    CCARGS="${CCARGS} -DHAS_SSL -I/usr/include/openssl"
+    CCARGS="${CCARGS} -DUSE_TLS -I/usr/include/openssl"
     AUXLIBS="${AUXLIBS} -lssl -lcrypto"
   fi
+%endif
+%if %{IPV6} != 1
+  CCARGS="${CCARGS} -DNO_IPV6"
 %endif
 
 export CCARGS AUXLIBS
@@ -307,21 +234,6 @@ sh postfix-install -non-interactive \
        manpage_directory=%{_mandir} \
        sample_directory=%{postfix_sample_dir} \
        readme_directory=%{postfix_readme_dir} || exit 1
-
-# Move around the TLS docs
-%if %{TLS}
-mkdir -p $RPM_BUILD_ROOT%{postfix_doc_dir}/TLS
-cp %{tlsno}/doc/* $RPM_BUILD_ROOT%{postfix_doc_dir}/TLS
-for i in ACKNOWLEDGEMENTS CHANGES INSTALL README TODO; do
-  cp %{tlsno}/$i $RPM_BUILD_ROOT%{postfix_doc_dir}/TLS
-done
-mkdir -p $RPM_BUILD_ROOT%{postfix_doc_dir}/TLS/contributed
-for i in 00README loadCAcert.pl Postfix_SSL-HOWTO.pdf SSL_CA-HOWTO.pdf fp.csh make-postfix-cert.sh; do
-  cp %{tlsno}/contributed/$i $RPM_BUILD_ROOT%{postfix_doc_dir}/TLS/contributed
-done
-# fix path to perl
-perl -pi -e "s,/usr/local/bin/perl,/usr/bin/perl,g" $RPM_BUILD_ROOT%{postfix_doc_dir}/TLS/contributed/loadCAcert.pl
-%endif
 
 # This installs into the /etc/rc.d/init.d directory
 /bin/mkdir -p $RPM_BUILD_ROOT/etc/rc.d/init.d
@@ -380,14 +292,6 @@ install -c pflogsumm-%{pflogsumm_ver}/pflogsumm.pl $RPM_BUILD_ROOT%{postfix_comm
 mantools/srctoman - auxiliary/qshape/qshape.pl > qshape.1
 install -c qshape.1 $RPM_BUILD_ROOT%{_mandir}/man1/qshape.1
 install -c auxiliary/qshape/qshape.pl $RPM_BUILD_ROOT%{postfix_command_dir}/qshape
-
-mkdir -p $RPM_BUILD_ROOT%{postfix_sample_dir}
-%if %{IPV6}
-	install -c conf/sample-ipv6.cf $RPM_BUILD_ROOT%{postfix_sample_dir}/sample-ipv6.cf
-%endif
-%if %{TLS}
-	install -c conf/sample-tls.cf $RPM_BUILD_ROOT%{postfix_sample_dir}/sample-tls.cf
-%endif
 
 rm -f $RPM_BUILD_ROOT/etc/postfix/aliases
 
@@ -486,11 +390,8 @@ exit 0
 %doc %attr(0644, root, root) %{postfix_doc_dir}/README-*
 %dir %attr(0755, root, root) %{postfix_readme_dir}
 %doc %attr(0644, root, root) %{postfix_readme_dir}/*
-%dir %attr(0755, root, root) %{postfix_sample_dir}
-%doc %attr(0644, root, root) %{postfix_sample_dir}/*
-%dir %attr(0755, root, root) %{postfix_doc_dir}/TLS
-%doc %attr(0644, root, root) %{postfix_doc_dir}/TLS/*
-%dir %attr(0755, root, root) %{postfix_doc_dir}/TLS/contributed
+#%dir %attr(0755, root, root) %{postfix_sample_dir}
+#%doc %attr(0644, root, root) %{postfix_sample_dir}/*
 
 %dir %attr(0755, root, root) %{postfix_config_dir}
 %dir %attr(0755, root, root) %{postfix_daemon_dir}
@@ -530,6 +431,7 @@ exit 0
 %attr(0644, root, root) %{postfix_config_dir}/LICENSE
 %attr(0644, root, root) %config(noreplace) %{postfix_config_dir}/access
 %attr(0644, root, root) %config(noreplace) %{postfix_config_dir}/canonical
+%attr(0644, root, root) %config(noreplace) %{postfix_config_dir}/generic
 %attr(0644, root, root) %config(noreplace) %{postfix_config_dir}/header_checks
 %attr(0644, root, root) %config(noreplace) %{postfix_config_dir}/main.cf
 %attr(0644, root, root) %{postfix_config_dir}/main.cf.default
@@ -539,6 +441,7 @@ exit 0
 %attr(0644, root, root) %{postfix_config_dir}/postfix-files
 %attr(0755, root, root) %{postfix_config_dir}/postfix-script
 %attr(0644, root, root) %config(noreplace) %{postfix_config_dir}/relocated
+%attr(0755, root, root) %{postfix_config_dir}/TLS_LICENSE
 %attr(0644, root, root) %config(noreplace) %{postfix_config_dir}/transport
 %attr(0644, root, root) %config(noreplace) %{postfix_config_dir}/virtual
 %attr(0755, root, root) %{postfix_daemon_dir}/*
@@ -556,6 +459,18 @@ exit 0
 
 
 %changelog
+* Fri Mar 18 2005 Thomas Woerner <twoerner@redhat.com> 2:2.2.1-1
+- new version 2.2.1
+- allow to start postfix without alias_database (#149657)
+
+* Fri Mar 11 2005 Thomas Woerner <twoerner@redhat.com> 2:2.2.0-1
+- new version 2.2.0
+- cleanup of spec file: removed external TLS and IPV6 patches, removed 
+  smtp_sasl_proto patch
+- dropped samples directory till there are good examples again (was TLS and
+  IPV6)
+- v2.2.0 fixes code problems: #132798 and #137858
+
 * Fri Feb 11 2005 Thomas Woerner <twoerner@redhat.com> 2:2.1.5-5.1
 - fixed open relay bug in postfix ipv6 patch: new version 1.26 (#146731)
 - fixed permissions on doc directory (#147280)

@@ -33,22 +33,24 @@ RETVAL=0
 
 start() {
 	# Start daemons.
-	echo -n "Starting postfix: "
+	echo -n $"Starting postfix: "
 	alias_database=$(postconf -h alias_database 2>/dev/null)
-	RETVAL=1
-	[ -z "$alias_database" ] && {
-	    failure "determination of alias_database"
-	    echo
-	    return 0	    
-	}
-	/usr/sbin/postalias ${alias_database//,} 2>/dev/null
 	RETVAL=$?
-	[ $RETVAL -ne 0 ] && {
-	    failure "postalias $alias_database"
+	if [ $RETVAL -ne 0 ]; then
+	    failure $"determination of alias_database"
 	    echo
-	    return 0	    
-	}
-	/usr/sbin/postfix start 2>/dev/null 1>&2 && success || failure
+	    return 0
+	fi
+	if [ -n "$alias_database" ]; then
+	    /usr/sbin/postalias ${alias_database//,} 2>/dev/null
+	    RETVAL=$?
+	    if [ $RETVAL -ne 0 ]; then
+		failure $"postalias $alias_database"
+		echo
+		return 0
+	    fi
+	fi
+	/usr/sbin/postfix start 2>/dev/null 1>&2 && success || failure $"postfix start"
 	RETVAL=$?
 	[ $RETVAL -eq 0 ] && touch /var/lock/subsys/postfix
         echo
@@ -57,8 +59,8 @@ start() {
 
 stop() {
         # Stop daemons.
-	echo -n "Shutting down postfix: "
-	/usr/sbin/postfix stop 2>/dev/null 1>&2 && success || failure
+	echo -n $"Shutting down postfix: "
+	/usr/sbin/postfix stop 2>/dev/null 1>&2 && success || failure $"postfix stop"
 	RETVAL=$?
 	[ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/postfix
 	echo
@@ -66,25 +68,25 @@ stop() {
 }
 
 reload() {
-	echo -n "Reloading postfix: "
-	/usr/sbin/postfix reload 2>/dev/null 1>&2 && success || failure
+	echo -n $"Reloading postfix: "
+	/usr/sbin/postfix reload 2>/dev/null 1>&2 && success || failure $"postfix reload"
 	RETVAL=$?
 	echo
 	return $RETVAL
 }
 
 abort() {
-	/usr/sbin/postfix abort 2>/dev/null 1>&2 && success || failure
+	/usr/sbin/postfix abort 2>/dev/null 1>&2 && success || failure $"postfix abort"
 	return $?
 }
 
 flush() {
-	/usr/sbin/postfix flush 2>/dev/null 1>&2 && success || failure
+	/usr/sbin/postfix flush 2>/dev/null 1>&2 && success || failure $"postfix flush"
 	return $?
 }
 
 check() {
-	/usr/sbin/postfix check 2>/dev/null 1>&2 && success || failure
+	/usr/sbin/postfix check 2>/dev/null 1>&2 && success || failure $"postfix check"
 	return $?
 }
 
@@ -124,7 +126,7 @@ case "$1" in
 	[ -f /var/lock/subsys/postfix ] && restart || :
 	;;
   *)
-	echo "Usage: postfix {start|stop|restart|reload|abort|flush|check|status|condrestart}"
+	echo $"Usage: postfix {start|stop|restart|reload|abort|flush|check|status|condrestart}"
 	exit 1
 esac
 
