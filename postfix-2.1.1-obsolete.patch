@@ -1,0 +1,12 @@
+--- postfix-2.1.1/conf/post-install.obsolete	2004-06-18 15:55:13.554527176 +0200
++++ postfix-2.1.1/conf/post-install	2004-06-18 15:55:35.625492558 +0200
+@@ -635,8 +635,7 @@
+     test -n "$obsolete" && {
+ 	cat <<EOF | ${FMT}
+ 
+-    Note: the following files or directories still exist but are
+-    no longer part of Postfix:
++    Note: the following files or directories are no longer part of Postfix:
+ 
+     $obsolete
+ 

@@ -20,21 +20,6 @@
 # Do we use db3 or db4 ? If we have db4, assume db4, otherwise db3.
 %define dbver db4
 
-# If set to 1 if official version, 0 if snapshot
-%define official 1
-%define ver 2.1.1
-%define releasedate 20040120
-%define alternatives 1
-%if %{official}
-Version: %{ver}
-%define ftp_directory official
-%else
-Version: %{ver}.%{releasedate}
-%define ftp_directory experimental
-%endif
-Release: 2
-Epoch: 2
-
 %define tlsno pfixtls-0.8.18-2.1.0-0.9.7d
 %if %{PFLOGSUMM}
 %define pflogsumm_ver 1.1.0
@@ -60,27 +45,22 @@ Epoch: 2
 %define postfix_readme_dir  %{postfix_doc_dir}/README_FILES
 
 Name: postfix
+Summary: Postfix Mail Transport Agent
+Version: 2.1.1
+Release: 3.1
+Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
 License: IBM Public License
 PreReq: /sbin/chkconfig, /sbin/service, sh-utils
 PreReq: fileutils, textutils,
-%if %alternatives
 PreReq: /usr/sbin/alternatives
-%else
-Obsoletes: sendmail exim qmail
-%endif
 
 PreReq: %{_sbindir}/groupadd, %{_sbindir}/useradd
 
 Provides: MTA smtpd smtpdaemon /usr/bin/newaliases
-Summary: Postfix Mail Transport Agent
 
-%if %{official}
-Source0: ftp://ftp.porcupine.org/mirrors/postfix-release/%{ftp_directory}/%{name}-%{version}.tar.gz
-%else
-Source0: ftp://ftp.porcupine.org/mirrors/postfix-release/%{ftp_directory}/%{name}-%{ver}-%{releasedate}.tar.gz
-%endif
+Source0: ftp://ftp.porcupine.org/mirrors/postfix-release/official/%{name}-%{version}.tar.gz
 Source1: postfix-etc-init.d-postfix
 Source2: postfix-aliases
 Source3: README-Postfix-SASL-RedHat.txt
@@ -130,6 +110,7 @@ Patch2: postfix-smtp_sasl_proto.c.patch
 Patch3: postfix-alternatives.patch
 Patch4: postfix-hostname-fqdn.patch
 Patch5: postfix-2.1.1-pie.patch
+Patch6: postfix-2.1.1-obsolete.patch
 
 # Optional patches - set the appropriate environment variables to include
 #                    them when building the package/spec file
@@ -175,11 +156,7 @@ TLS
 %prep
 umask 022
 
-%if %{official}
 %setup -q
-%else
-%setup -q -n %{name}-%{ver}-%{releasedate}
-%endif
 #
 # IPv6 and TLS are sort of hand in hand. We need to apply them in the
 # following order:
@@ -228,11 +205,10 @@ patch --fuzz=3 -p1 -b -z .config < %{P:1}
 
 # Apply obligatory patches
 %patch2 -p1 -b .auth
-%if %alternatives
 %patch3 -p1 -b .alternatives
-%endif
 %patch4 -p1 -b .postfix-hostname-fqdn
 %patch5 -p1 -b .pie
+%patch6 -p1 -b .obsolete
 
 %if %{PFLOGSUMM}
 gzip -dc %{SOURCE53} | tar xf -
@@ -367,7 +343,7 @@ chmod 644 $RPM_BUILD_ROOT%{postfix_config_dir}/aliases
 
 touch $RPM_BUILD_ROOT/%{postfix_config_dir}/aliases.db
 
-for i in active bounce corrupt defer deferred flush incoming private saved maildrop public pid; do
+for i in active bounce corrupt defer deferred flush incoming private saved maildrop public pid saved trace; do
     mkdir -p $RPM_BUILD_ROOT%{postfix_queue_dir}/$i
 done
 
@@ -410,6 +386,11 @@ install -c -m 644 pflogsumm-%{pflogsumm_ver}/pflogsumm.1 $RPM_BUILD_ROOT%{_mandi
 install -c pflogsumm-%{pflogsumm_ver}/pflogsumm.pl $RPM_BUILD_ROOT%{postfix_command_dir}/pflogsumm
 %endif
 
+# install qshape
+mantools/srctoman - auxiliary/qshape/qshape.pl > qshape.1
+install -c qshape.1 $RPM_BUILD_ROOT%{_mandir}/man1/qshape.1
+install -c auxiliary/qshape/qshape.pl $RPM_BUILD_ROOT%{postfix_command_dir}/qshape
+
 mkdir -p $RPM_BUILD_ROOT%{postfix_sample_dir}
 %if %{IPV6}
 	install -c conf/sample-ipv6.cf $RPM_BUILD_ROOT%{postfix_sample_dir}/sample-ipv6.cf
@@ -441,7 +422,6 @@ sh %{postfix_config_dir}/post-install \
 	readme_directory=%{postfix_readme_dir} \
 	upgrade-package
 
-%if %alternatives
 /usr/sbin/alternatives --install %{postfix_command_dir}/sendmail mta %{postfix_command_dir}/sendmail.postfix 30 \
         --slave %{_bindir}/mailq mta-mailq %{_bindir}/mailq.postfix \
         --slave %{_bindir}/newaliases mta-newaliases %{_bindir}/newaliases.postfix \
@@ -453,7 +433,6 @@ sh %{postfix_config_dir}/post-install \
         --slave %{_mandir}/man8/sendmail.8.gz mta-sendmailman %{_mandir}/man1/sendmail.postfix.1.gz \
         --slave %{_mandir}/man5/aliases.5.gz mta-aliasesman %{_mandir}/man5/aliases.postfix.5.gz \
 	--initscript postfix
-%endif
 
 %pre
 # Add user and groups if necessary
@@ -470,10 +449,7 @@ if [ "$1" = 0 ]; then
     # stop postfix silently, but only if it's running
     /sbin/service postfix stop &>/dev/null
     /sbin/chkconfig --del postfix
-%if %alternatives
     /usr/sbin/alternatives --remove mta %{postfix_command_dir}/sendmail.postfix
-%endif
-
 fi
 
 exit 0
@@ -504,7 +480,7 @@ exit 0
 %config(noreplace) %{sasl_v1_lib_dir}/smtpd.conf
 %config(noreplace) %{sasl_v2_lib_dir}/smtpd.conf
 %config(noreplace) %{_sysconfdir}/pam.d/smtp.postfix
-%config(noreplace) %{postfix_config_dir}/aliases.db
+%config(noreplace) %verify(not md5 size mtime) %{postfix_config_dir}/aliases.db
 %attr(0755, root, root) %config /etc/rc.d/init.d/postfix
 
 # Misc files
@@ -513,12 +489,17 @@ exit 0
 
 %attr(0755, root, root) %{postfix_command_dir}/smtp-sink
 %attr(0755, root, root) %{postfix_command_dir}/smtp-source
+%attr(0755, root, root) %{postfix_command_dir}/qshape
 %attr(0755, root, root) /usr/lib/sendmail.postfix
 
-%doc %{postfix_doc_dir}/README-Postfix-SASL-RedHat.txt
-
+%dir %attr(0755, root, root) %{postfix_doc_dir}
+%doc %attr(0644, root, root) %{postfix_doc_dir}/README-*
+%dir %attr(0755, root, root) %{postfix_readme_dir}
+%doc %attr(0644, root, root) %{postfix_readme_dir}/*
 %dir %attr(0755, root, root) %{postfix_sample_dir}
 %doc %attr(0644, root, root) %{postfix_sample_dir}/*
+%dir %attr(0755, root, root) %{postfix_doc_dir}/TLS
+%doc %attr(0644, root, root) %{postfix_doc_dir}/TLS/*
 
 %dir %attr(0755, root, root) %{postfix_config_dir}
 %dir %attr(0755, root, root) %{postfix_daemon_dir}
@@ -531,16 +512,18 @@ exit 0
 %dir %attr(0700, %{postfix_user}, root) %{postfix_queue_dir}/flush
 %dir %attr(0700, %{postfix_user}, root) %{postfix_queue_dir}/hold
 %dir %attr(0700, %{postfix_user}, root) %{postfix_queue_dir}/incoming
+%dir %attr(0700, %{postfix_user}, root) %{postfix_queue_dir}/saved
+%dir %attr(0700, %{postfix_user}, root) %{postfix_queue_dir}/trace
 %dir %attr(0730, %{postfix_user}, %{maildrop_group}) %{postfix_queue_dir}/maildrop
 %dir %attr(0755, root, root) %{postfix_queue_dir}/pid
 %dir %attr(0700, %{postfix_user}, root) %{postfix_queue_dir}/private
 %dir %attr(0710, %{postfix_user}, %{maildrop_group}) %{postfix_queue_dir}/public
-%dir %attr(0755, root, root) %{postfix_doc_dir}
 
-%attr(0644, root, root) %{_mandir}/man1/*
+%attr(0644, root, root) %{_mandir}/man1/[a-n]*
+%attr(0644, root, root) %{_mandir}/man1/post*
+%attr(0644, root, root) %{_mandir}/man1/[q-z]*
 %attr(0644, root, root) %{_mandir}/man5/*
 %attr(0644, root, root) %{_mandir}/man8/*
-%doc %attr(0644, root, root) %{postfix_doc_dir}/*
 
 %attr(0755, root, root) %{postfix_command_dir}/postalias
 %attr(0755, root, root) %{postfix_command_dir}/postcat
@@ -583,6 +566,16 @@ exit 0
 
 
 %changelog
+* Mon Jun 21 2004 Thomas Woerner <twoerner@redhat.com> 2:2.1.1-3.1
+- fixed directory permissions in %%doc (#125406)
+- fixed missing spool dirs (#125460)
+- fixed verify problem for aliases.db (#125461)
+- fixed bogus upgrade warning (#125628)
+- more spec file cleanup
+
+* Tue Jun 15 2004 Elliot Lee <sopwith@redhat.com>
+- rebuilt
+
 * Sun Jun 06 2004 Florian La Roche <Florian.LaRoche@redhat.de>
 - make sure pflog files have same permissions even if in multiple
   sub-rpms
