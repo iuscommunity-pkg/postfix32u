@@ -30,7 +30,7 @@ Version: %{ver}
 Version: %{ver}-%{releasedate}
 %define ftp_directory experimental
 %endif
-Release: 1
+Release: 2
 Epoch: 2
 
 %define tlsno pfixtls-0.8.16-2.0.16-0.9.7b
@@ -438,8 +438,14 @@ exit 0
 %{_mandir}/*/*
 
 %changelog
+* Sat Dec 13 2003 Jeff Johnson <jbj@jbj.org> 2:2.0.16-2
+- rebuild against db-4.2.52.
+ 
 * Mon Nov 17 2003 John Dennis <jdennis@finch.boston.redhat.com> 2:2.0.16-1
 - sync up with current upstream release, 2.0.16, fixes bug #108960
+
+* Thu Sep 25 2003 Jeff Johnson <jbj@jbj.org> 2.0.11-6
+- rebuild against db-4.2.42.
 
 * Tue Jul 22 2003 Nalin Dahyabhai <nalin@redhat.com> 2.0.11-5
 - rebuild
