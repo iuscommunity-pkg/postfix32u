@@ -17,9 +17,6 @@
 %define SASL 1
 %endif
 
-# Do we use db3 or db4 ? If we have db4, assume db4, otherwise db3.
-%define dbver db4
-
 %define tlsno pfixtls-0.8.18-2.1.3-0.9.7d
 %if %{PFLOGSUMM}
 %define pflogsumm_ver 1.1.0
@@ -47,7 +44,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.1.5
-Release: 3.1
+Release: 4
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -118,12 +115,10 @@ Patch7: postfix-2.1.5-aliases.patch
 BuildRoot: %{_tmppath}/%{name}-buildroot
 
 # Determine the different packages required for building postfix
-BuildRequires: gawk, perl, sed, ed, %{dbver}-devel, pkgconfig, zlib-devel
+BuildRequires: gawk, perl, sed, ed, db4-devel, pkgconfig, zlib-devel
 
 Requires: setup >= 2.5.36-1
 BuildRequires: setup >= 2.5.36-1
-
-Requires: %{dbver}
 
 %if %{LDAP}
 BuildRequires: openldap >= 2.0.27, openldap-devel >= 2.0.27
@@ -560,6 +555,10 @@ exit 0
 
 
 %changelog
+* Thu Nov 11 2004 Jeff Johnson <jbj@jbj.org> 2:2.1.5-4
+- rebuild against db-4.3.21.
+- remove Requires: db4, the soname linkage dependency is sufficient.
+
 * Thu Nov 11 2004 Thomas Woerner <twoerner@redhat.com> 2:2.1.5-3.1
 - fixed problem with multiple alias maps (#138354)
 
