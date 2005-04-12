@@ -42,7 +42,7 @@
 
 Name: postfix
 Summary: Postfix Mail Transport Agent
-Version: 2.2.1
+Version: 2.2.2
 Release: 1
 Epoch: 2
 Group: System Environment/Daemons
@@ -459,6 +459,9 @@ exit 0
 
 
 %changelog
+* Tue Apr 12 2005 Thomas Woerner <twoerner@redhat.com> 2:2.2.2-1
+- new version 2.2.2
+
 * Fri Mar 18 2005 Thomas Woerner <twoerner@redhat.com> 2:2.2.1-1
 - new version 2.2.1
 - allow to start postfix without alias_database (#149657)
