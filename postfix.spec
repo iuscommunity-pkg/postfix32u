@@ -43,7 +43,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.2.2
-Release: 1
+Release: 2
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -78,6 +78,7 @@ Patch4: postfix-hostname-fqdn.patch
 Patch5: postfix-2.1.1-pie.patch
 Patch6: postfix-2.1.1-obsolete.patch
 Patch7: postfix-2.1.5-aliases.patch
+Patch8: postfix-large-fs.patch
 
 # Optional patches - set the appropriate environment variables to include
 #                    them when building the package/spec file
@@ -132,6 +133,7 @@ umask 022
 %patch5 -p1 -b .pie
 %patch6 -p1 -b .obsolete
 %patch7 -p1 -b .aliases
+%patch8 -p1 -b .large-fs
 
 %if %{PFLOGSUMM}
 gzip -dc %{SOURCE53} | tar xf -
@@ -459,6 +461,9 @@ exit 0
 
 
 %changelog
+* Wed Apr 20 2005 Tomas Mraz <tmraz@redhat.com> 2:2.2.2-2
+- fix fsspace on large filesystems (>2G blocks)
+
 * Tue Apr 12 2005 Thomas Woerner <twoerner@redhat.com> 2:2.2.2-1
 - new version 2.2.2
 
