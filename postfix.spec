@@ -42,8 +42,8 @@
 
 Name: postfix
 Summary: Postfix Mail Transport Agent
-Version: 2.2.2
-Release: 2
+Version: 2.2.3
+Release: 1
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -75,7 +75,6 @@ Source101: postfix-pam.conf
 Patch1: postfix-2.1.1-config.patch
 Patch3: postfix-alternatives.patch
 Patch4: postfix-hostname-fqdn.patch
-Patch5: postfix-2.1.1-pie.patch
 Patch6: postfix-2.1.1-obsolete.patch
 Patch7: postfix-2.1.5-aliases.patch
 Patch8: postfix-large-fs.patch
@@ -130,7 +129,6 @@ umask 022
 %patch1 -p1 -b .config
 %patch3 -p1 -b .alternatives
 %patch4 -p1 -b .postfix-hostname-fqdn
-%patch5 -p1 -b .pie
 %patch6 -p1 -b .obsolete
 %patch7 -p1 -b .aliases
 %patch8 -p1 -b .large-fs
@@ -202,6 +200,8 @@ CCARGS="${CCARGS} -fsigned-char"
 %if %{IPV6} != 1
   CCARGS="${CCARGS} -DNO_IPV6"
 %endif
+
+AUXLIBS="${AUXLIBS} -pie"
 
 export CCARGS AUXLIBS
 make -f Makefile.init makefiles
@@ -461,6 +461,10 @@ exit 0
 
 
 %changelog
+* Thu May 12 2005 Thomas Woerner <twoerner@redhat.com> 2:2.2.3-1
+- new version 2.2.3
+- compiling all binaries PIE, dropped old pie patch
+
 * Wed Apr 20 2005 Tomas Mraz <tmraz@redhat.com> 2:2.2.2-2
 - fix fsspace on large filesystems (>2G blocks)
 
