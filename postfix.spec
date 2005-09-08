@@ -42,7 +42,7 @@
 
 Name: postfix
 Summary: Postfix Mail Transport Agent
-Version: 2.2.3
+Version: 2.2.5
 Release: 1
 Epoch: 2
 Group: System Environment/Daemons
@@ -461,6 +461,9 @@ exit 0
 
 
 %changelog
+* Thu Sep  8 2005 Thomas Woerner <twoerner@redhat.com> 2:2.2.5-1
+- new version 2.2.5
+
 * Thu May 12 2005 Thomas Woerner <twoerner@redhat.com> 2:2.2.3-1
 - new version 2.2.3
 - compiling all binaries PIE, dropped old pie patch
