@@ -461,6 +461,9 @@ exit 0
 
 
 %changelog
+* Fri Oct  7 2005 Tomas Mraz <tmraz@redhat.com>
+- use include instead of pam_stack in pam config
+
 * Thu Sep  8 2005 Thomas Woerner <twoerner@redhat.com> 2:2.2.5-1
 - new version 2.2.5
 
