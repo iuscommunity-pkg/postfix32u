@@ -43,7 +43,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.2.5
-Release: 1
+Release: 2
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -461,6 +461,9 @@ exit 0
 
 
 %changelog
+* Thu Nov 10 2005 Tomas Mraz <tmraz@redhat.com> 2:2.2.5-2
+- rebuilt against new openssl
+
 * Fri Oct  7 2005 Tomas Mraz <tmraz@redhat.com>
 - use include instead of pam_stack in pam config
 
