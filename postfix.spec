@@ -43,7 +43,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.2.5
-Release: 2
+Release: 2.1
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -78,6 +78,7 @@ Patch4: postfix-hostname-fqdn.patch
 Patch6: postfix-2.1.1-obsolete.patch
 Patch7: postfix-2.1.5-aliases.patch
 Patch8: postfix-large-fs.patch
+Patch9: postfix-2.2.5-cyrus.patch
 
 # Optional patches - set the appropriate environment variables to include
 #                    them when building the package/spec file
@@ -132,6 +133,7 @@ umask 022
 %patch6 -p1 -b .obsolete
 %patch7 -p1 -b .aliases
 %patch8 -p1 -b .large-fs
+%patch9 -p1 -b .cyrus
 
 %if %{PFLOGSUMM}
 gzip -dc %{SOURCE53} | tar xf -
@@ -267,6 +269,7 @@ EOF
 perl -i -pe 's:/cyrus/bin/deliver:/usr/lib/cyrus-imapd/deliver:' $RPM_BUILD_ROOT%{postfix_config_dir}/master.cf
 
 cat $RPM_BUILD_ROOT%{postfix_config_dir}/postfix-files
+%if %{SASL}
 # Install the smtpd.conf file for SASL support.
 # See README-Postfix-SASL-RedHat.txt for why we need to set saslauthd_version
 # in the v1 version of smtpd.conf
@@ -276,6 +279,7 @@ echo "saslauthd_version: 2" >> $RPM_BUILD_ROOT%{sasl_v1_lib_dir}/smtpd.conf
 
 mkdir -p $RPM_BUILD_ROOT%{sasl_v2_lib_dir}
 install -m 644 %{SOURCE100} $RPM_BUILD_ROOT%{sasl_v2_lib_dir}/smtpd.conf
+%endif
 
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/pam.d
 install -m 644 %{SOURCE101} $RPM_BUILD_ROOT%{_sysconfdir}/pam.d/smtp.postfix
@@ -374,8 +378,10 @@ exit 0
 
 # Config files not part of upstream
 
+%if %{SASL}
 %config(noreplace) %{sasl_v1_lib_dir}/smtpd.conf
 %config(noreplace) %{sasl_v2_lib_dir}/smtpd.conf
+%endif
 %config(noreplace) %{_sysconfdir}/pam.d/smtp.postfix
 %attr(0755, root, root) %config /etc/rc.d/init.d/postfix
 
@@ -461,6 +467,12 @@ exit 0
 
 
 %changelog
+* Fri Nov 11 2005 Thomas Woerner <twoerner@redhat.com> 2:2.2.5-2.1
+- replaced postconf and postalias call in initscript with newaliases (#156358)
+- fixed initscripts messages (#155774)
+- fixed build problems when sasl is disabled (#164773)
+- fixed pre-definition of mailbox_transport lmtp socket path (#122910)
+
 * Thu Nov 10 2005 Tomas Mraz <tmraz@redhat.com> 2:2.2.5-2
 - rebuilt against new openssl
 
