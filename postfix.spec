@@ -43,7 +43,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.2.5
-Release: 2.1
+Release: 2.1.1
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -467,6 +467,9 @@ exit 0
 
 
 %changelog
+* Fri Dec 09 2005 Jesse Keating <jkeating@redhat.com>
+- rebuilt
+
 * Fri Nov 11 2005 Thomas Woerner <twoerner@redhat.com> 2:2.2.5-2.1
 - replaced postconf and postalias call in initscript with newaliases (#156358)
 - fixed initscripts messages (#155774)
