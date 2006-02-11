@@ -43,7 +43,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.2.8
-Release: 1.1
+Release: 1.2
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -467,6 +467,9 @@ exit 0
 
 
 %changelog
+* Fri Feb 10 2006 Jesse Keating <jkeating@redhat.com> - 2:2.2.8-1.2
+- bump again for double-long bug on ppc(64)
+
 * Tue Feb 07 2006 Jesse Keating <jkeating@redhat.com> - 2:2.2.8-1.1
 - rebuilt for new gcc4.1 snapshot and glibc changes
 
