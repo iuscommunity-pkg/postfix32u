@@ -42,8 +42,8 @@
 
 Name: postfix
 Summary: Postfix Mail Transport Agent
-Version: 2.2.8
-Release: 1.2
+Version: 2.2.10
+Release: 1
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -62,8 +62,10 @@ Source3: README-Postfix-SASL-RedHat.txt
 
 # Sources 50-99 are upstream [patch] contributions
 
+%if %{PFLOGSUMM}
 # Postfix Log Entry Summarizer: http://jimsun.linxnet.com/postfix_contrib.html
 Source53: http://jimsun.linxnet.com/downloads/pflogsumm-%{pflogsumm_ver}.tar.gz
+%endif
 
 # Sources >= 100 are config files
 
@@ -165,7 +167,7 @@ CCARGS="${CCARGS} -fsigned-char"
 %endif
 
 %if %{LDAP}
-  CCARGS="${CCARGS} -DHAS_LDAP"
+  CCARGS="${CCARGS} -DHAS_LDAP -DLDAP_DEPRECATED=1"
   AUXLIBS="${AUXLIBS} -L%{_libdir} -lldap -llber"
 %endif
 %if %{PCRE}
@@ -467,6 +469,11 @@ exit 0
 
 
 %changelog
+* Tue Apr 11 2006 Thomas Woerner <twoerner@redhat.com> 2:2.2.10-1
+- new version 2.2.10
+- added option LDAP_DEPRECATED to support deprecated ldap functions for now
+- fixed build without pflogsumm support (#188470)
+
 * Fri Feb 10 2006 Jesse Keating <jkeating@redhat.com> - 2:2.2.8-1.2
 - bump again for double-long bug on ppc(64)
 
