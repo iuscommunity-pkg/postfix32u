@@ -43,7 +43,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.2.10
-Release: 1
+Release: 2
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -205,7 +205,7 @@ CCARGS="${CCARGS} -fsigned-char"
   CCARGS="${CCARGS} -DNO_IPV6"
 %endif
 
-AUXLIBS="${AUXLIBS} -pie"
+AUXLIBS="${AUXLIBS} -pie -Wl,-z,relro"
 
 export CCARGS AUXLIBS
 make -f Makefile.init makefiles
@@ -469,6 +469,9 @@ exit 0
 
 
 %changelog
+* Wed May 10 2006 Thomas Woerner <twoerner@redhat.com> 2:2.2.10-2
+- added RELRO security protection
+
 * Tue Apr 11 2006 Thomas Woerner <twoerner@redhat.com> 2:2.2.10-1
 - new version 2.2.10
 - added option LDAP_DEPRECATED to support deprecated ldap functions for now
