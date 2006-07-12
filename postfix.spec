@@ -43,7 +43,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.2.10
-Release: 2
+Release: 2.1
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -469,6 +469,9 @@ exit 0
 
 
 %changelog
+* Wed Jul 12 2006 Jesse Keating <jkeating@redhat.com> - 2:2.2.10-2.1
+- rebuild
+
 * Wed May 10 2006 Thomas Woerner <twoerner@redhat.com> 2:2.2.10-2
 - added RELRO security protection
 
