@@ -42,8 +42,8 @@
 
 Name: postfix
 Summary: Postfix Mail Transport Agent
-Version: 2.2.10
-Release: 2.1
+Version: 2.3.0
+Release: 1
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -76,7 +76,6 @@ Source101: postfix-pam.conf
 
 Patch1: postfix-2.1.1-config.patch
 Patch3: postfix-alternatives.patch
-Patch4: postfix-hostname-fqdn.patch
 Patch6: postfix-2.1.1-obsolete.patch
 Patch7: postfix-2.1.5-aliases.patch
 Patch8: postfix-large-fs.patch
@@ -131,7 +130,6 @@ umask 022
 # Apply obligatory patches
 %patch1 -p1 -b .config
 %patch3 -p1 -b .alternatives
-%patch4 -p1 -b .postfix-hostname-fqdn
 %patch6 -p1 -b .obsolete
 %patch7 -p1 -b .aliases
 %patch8 -p1 -b .large-fs
@@ -440,6 +438,7 @@ exit 0
 %attr(0755, root, root) %{postfix_command_dir}/postsuper
 %attr(0644, root, root) %{postfix_config_dir}/LICENSE
 %attr(0644, root, root) %config(noreplace) %{postfix_config_dir}/access
+%attr(0644, root, root) %config(noreplace) %{postfix_config_dir}/bounce.cf.default
 %attr(0644, root, root) %config(noreplace) %{postfix_config_dir}/canonical
 %attr(0644, root, root) %config(noreplace) %{postfix_config_dir}/generic
 %attr(0644, root, root) %config(noreplace) %{postfix_config_dir}/header_checks
@@ -469,6 +468,10 @@ exit 0
 
 
 %changelog
+* Mon Jul 24 2006 Thomas Woerner <twoerner@redhat.com> 2:2.3.0-1
+- new version 2.3.0
+- dropped hostname-fqdn patch
+
 * Wed Jul 12 2006 Jesse Keating <jkeating@redhat.com> - 2:2.2.10-2.1
 - rebuild
 
