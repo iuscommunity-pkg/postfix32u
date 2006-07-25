@@ -43,7 +43,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.3.0
-Release: 1
+Release: 2
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -180,7 +180,7 @@ CCARGS="${CCARGS} -fsigned-char"
 %if %{SASL}
   %define sasl_v1_lib_dir %{_libdir}/sasl
   %define sasl_v2_lib_dir %{_libdir}/sasl2
-  CCARGS="${CCARGS} -DUSE_SASL_AUTH"
+  CCARGS="${CCARGS} -DUSE_SASL_AUTH -DUSE_CYRUS_SASL"
   %if %{SASL} <= 1
     %define sasl_lib_dir %{sasl_v1_lib_dir}
     AUXLIBS="${AUXLIBS} -L%{sasl_lib_dir} -lsasl"
@@ -468,6 +468,10 @@ exit 0
 
 
 %changelog
+* Tue Jul 25 2006 Thomas Woerner <twoerner@redhat.com> 2:2.3.0-2
+- fixed SASL build (#200079)
+  thanks to Kaj J. Niemi for the patch
+
 * Mon Jul 24 2006 Thomas Woerner <twoerner@redhat.com> 2:2.3.0-1
 - new version 2.3.0
 - dropped hostname-fqdn patch
