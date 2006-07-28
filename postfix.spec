@@ -42,8 +42,8 @@
 
 Name: postfix
 Summary: Postfix Mail Transport Agent
-Version: 2.3.0
-Release: 2
+Version: 2.3.1
+Release: 1
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -468,6 +468,10 @@ exit 0
 
 
 %changelog
+* Fri Jul 28 2006 Thomas Woerner <twoerner@redhat.com> 2:2.3.1-1
+- new version 2.3.1
+- fixes problems with TLS and Milter support
+
 * Tue Jul 25 2006 Thomas Woerner <twoerner@redhat.com> 2:2.3.0-2
 - fixed SASL build (#200079)
   thanks to Kaj J. Niemi for the patch
