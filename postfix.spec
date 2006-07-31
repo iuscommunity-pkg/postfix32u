@@ -42,7 +42,7 @@
 
 Name: postfix
 Summary: Postfix Mail Transport Agent
-Version: 2.3.1
+Version: 2.3.2
 Release: 1
 Epoch: 2
 Group: System Environment/Daemons
@@ -137,6 +137,9 @@ umask 022
 
 %if %{PFLOGSUMM}
 gzip -dc %{SOURCE53} | tar xf -
+pushd pflogsumm-%{pflogsumm_ver}
+patch -p0 < ../pflogsumm-conn-delays-dsn-patch
+popd
 %endif
 
 # pflogsumm subpackage
@@ -468,6 +471,13 @@ exit 0
 
 
 %changelog
+* Mon Jul 31 2006 Thomas Woerner <twoerner@redhat.com> 2:2.3.2-1
+- new version 2.3.2 with major upstream fixes:
+  - corrupted queue file after a request to modify a short message header
+  - panic after spurious Milter request when a client was rejected
+  - maked the Milter more tolerant for redundant "data cleanup" requests
+- applying pflogsumm-conn-delays-dsn-patch from postfix tree to pflogsumm
+
 * Fri Jul 28 2006 Thomas Woerner <twoerner@redhat.com> 2:2.3.1-1
 - new version 2.3.1
 - fixes problems with TLS and Milter support
