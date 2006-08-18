@@ -43,7 +43,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.3.2
-Release: 1
+Release: 2
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -471,6 +471,10 @@ exit 0
 
 
 %changelog
+* Fri Aug 18 2006 Jesse Keating <jkeating@redhat.com> - 2:2.3.2-2
+- rebuilt with latest binutils to pick up 64K -z commonpagesize on ppc*
+  (#203001)
+
 * Mon Jul 31 2006 Thomas Woerner <twoerner@redhat.com> 2:2.3.2-1
 - new version 2.3.2 with major upstream fixes:
   - corrupted queue file after a request to modify a short message header
