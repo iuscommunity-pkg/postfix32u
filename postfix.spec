@@ -315,7 +315,7 @@ umask 022
 /sbin/chkconfig --add postfix
 
 # upgrade configuration files if necessary
-sh %{postfix_config_dir}/post-install \
+%{_sbindir}/postfix set-permissions upgrade-configuration \
 	config_directory=%{postfix_config_dir} \
 	daemon_directory=%{postfix_daemon_dir} \
 	command_directory=%{postfix_command_dir} \
@@ -323,10 +323,9 @@ sh %{postfix_config_dir}/post-install \
 	setgid_group=%{maildrop_group} \
 	manpage_directory=%{_mandir} \
 	sample_directory=%{postfix_sample_dir} \
-	readme_directory=%{postfix_readme_dir} \
-	upgrade-package
+	readme_directory=%{postfix_readme_dir}
 
-/usr/sbin/alternatives --install %{postfix_command_dir}/sendmail mta %{postfix_command_dir}/sendmail.postfix 30 \
+%{_sbindir}/alternatives --install %{postfix_command_dir}/sendmail mta %{postfix_command_dir}/sendmail.postfix 30 \
         --slave %{_bindir}/mailq mta-mailq %{_bindir}/mailq.postfix \
         --slave %{_bindir}/newaliases mta-newaliases %{_bindir}/newaliases.postfix \
         --slave %{_sysconfdir}/pam.d/smtp mta-pam %{_sysconfdir}/pam.d/smtp.postfix \
@@ -471,6 +470,9 @@ exit 0
 
 
 %changelog
+* Fri Sep  1 2006 Thomas Woerner <twoerner@redhat.com> 2:2.3.3-2
+- fixed upgrade procedure (#202357)
+
 * Fri Sep  1 2006 Thomas Woerner <twoerner@redhat.com> 2:2.3.3-1
 - new version 2.3.3
 - fixed permissions of TLS_LICENSE file
