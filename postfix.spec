@@ -42,7 +42,7 @@
 
 Name: postfix
 Summary: Postfix Mail Transport Agent
-Version: 2.3.2
+Version: 2.3.3
 Release: 2
 Epoch: 2
 Group: System Environment/Daemons
@@ -453,7 +453,7 @@ exit 0
 %attr(0644, root, root) %{postfix_config_dir}/postfix-files
 %attr(0755, root, root) %{postfix_config_dir}/postfix-script
 %attr(0644, root, root) %config(noreplace) %{postfix_config_dir}/relocated
-%attr(0755, root, root) %{postfix_config_dir}/TLS_LICENSE
+%attr(0644, root, root) %{postfix_config_dir}/TLS_LICENSE
 %attr(0644, root, root) %config(noreplace) %{postfix_config_dir}/transport
 %attr(0644, root, root) %config(noreplace) %{postfix_config_dir}/virtual
 %attr(0755, root, root) %{postfix_daemon_dir}/*
@@ -471,6 +471,10 @@ exit 0
 
 
 %changelog
+* Fri Sep  1 2006 Thomas Woerner <twoerner@redhat.com> 2:2.3.3-1
+- new version 2.3.3
+- fixed permissions of TLS_LICENSE file
+
 * Fri Aug 18 2006 Jesse Keating <jkeating@redhat.com> - 2:2.3.2-2
 - rebuilt with latest binutils to pick up 64K -z commonpagesize on ppc*
   (#203001)
