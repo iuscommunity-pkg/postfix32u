@@ -42,8 +42,8 @@
 
 Name: postfix
 Summary: Postfix Mail Transport Agent
-Version: 2.3.3
-Release: 2
+Version: 2.3.4
+Release: 1
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -470,6 +470,9 @@ exit 0
 
 
 %changelog
+* Tue Nov  7 2006 Thomas Woerner <twoerner@redhat.com> 2:2.3.4-1
+- new version 2.3.4
+
 * Fri Sep  1 2006 Thomas Woerner <twoerner@redhat.com> 2:2.3.3-2
 - fixed upgrade procedure (#202357)
 
