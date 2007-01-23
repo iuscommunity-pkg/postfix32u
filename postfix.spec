@@ -259,15 +259,11 @@ for i in smtp-sink smtp-source ; do
   install -c -m 755 man/man1/$i.1 $RPM_BUILD_ROOT%{_mandir}/man1/
 done
 
-# RPM compresses man pages automatically.
-# - Edit postfix-files to reflect this, so post-install won't get confused
-#   when called during package installation.
-ed $RPM_BUILD_ROOT%{postfix_config_dir}/postfix-files <<EOF || exit 1
-%s/\(\/man[158]\/.*\.[158]\):/\1.gz:/
-%s/\$config_directory\/aliases:f/\#/
-w
-q
-EOF
+## RPM compresses man pages automatically.
+## - Edit postfix-files to reflect this, so post-install won't get confused
+##   when called during package installation.
+perl -i -pe "s#(/man[158]/.*.[158]):f#\1.gz:f#" $RPM_BUILD_ROOT%{postfix_config_dir}/postfix-files
+perl -i -pe 's/\$config_directory\/aliases:f/\#/' $RPM_BUILD_ROOT%{postfix_config_dir}/postfix-files
 
 perl -i -pe 's:/cyrus/bin/deliver:/usr/lib/cyrus-imapd/deliver:' $RPM_BUILD_ROOT%{postfix_config_dir}/master.cf
 
@@ -473,6 +469,7 @@ exit 0
 * Tue Jan 23 2007 Thomas Woerner <twoerner@redhat.com> 2:2.3.6-1
 - new version 2.3.6
 - limiting SASL mechanisms to plain login for sasl with saslauthd (#175259)
+- dropped usage of ed in the install stage
 
 * Tue Nov  7 2006 Thomas Woerner <twoerner@redhat.com> 2:2.3.4-1
 - new version 2.3.4
