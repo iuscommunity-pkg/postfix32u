@@ -472,6 +472,7 @@ exit 0
 %changelog
 * Tue Jan 23 2007 Thomas Woerner <twoerner@redhat.com> 2:2.3.6-1
 - new version 2.3.6
+- limiting SASL mechanisms to plain login for sasl with saslauthd (#175259)
 
 * Tue Nov  7 2006 Thomas Woerner <twoerner@redhat.com> 2:2.3.4-1
 - new version 2.3.4
