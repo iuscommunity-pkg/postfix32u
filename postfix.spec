@@ -12,7 +12,7 @@
 # requested but use the preferred SASL V2 if LDAP is not requested.
 # Sometime soon LDAP will build agains SASL V2 and this won't be needed.
 
-%if %{LDAP} <= 1 && %{SASL} >= 2
+%if %{LDAP} == 1 && %{SASL} >= 2
 %undefine SASL
 %define SASL 1
 %endif
@@ -43,7 +43,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.4.3
-Release: 1
+Release: 1%{dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -466,9 +466,12 @@ exit 0
 
 
 %changelog
+* Tue Jun  5 2007 Thomas Woerner <twoerner@redhat.com> 2:2.4.3-1%{dist}
+- allow to build without LDAP but SASL2 support (rhbz#216792)
+
 * Tue Jun  5 2007 Thomas Woerner <twoerner@redhat.com> 2:2.4.3-1
 - new stable version 2.4.3
-- enabled mysql support
+- enabled mysql support (rhbz#185515)
 - dropped build requirements for gawk, ed and sed
 
 * Tue Jan 23 2007 Thomas Woerner <twoerner@redhat.com> 2:2.3.6-1
