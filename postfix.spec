@@ -1,5 +1,5 @@
 %define LDAP 2
-%define MYSQL 0
+%define MYSQL 1
 %define PCRE 1
 %define SASL 2
 %define TLS 1
@@ -42,7 +42,7 @@
 
 Name: postfix
 Summary: Postfix Mail Transport Agent
-Version: 2.3.6
+Version: 2.4.3
 Release: 1
 Epoch: 2
 Group: System Environment/Daemons
@@ -79,7 +79,7 @@ Patch3: postfix-alternatives.patch
 Patch6: postfix-2.1.1-obsolete.patch
 Patch7: postfix-2.1.5-aliases.patch
 Patch8: postfix-large-fs.patch
-Patch9: postfix-2.2.5-cyrus.patch
+Patch9: postfix-2.4.0-cyrus.patch
 
 # Optional patches - set the appropriate environment variables to include
 #                    them when building the package/spec file
@@ -87,7 +87,7 @@ Patch9: postfix-2.2.5-cyrus.patch
 BuildRoot: %{_tmppath}/%{name}-buildroot
 
 # Determine the different packages required for building postfix
-BuildRequires: gawk, perl, sed, ed, db4-devel, pkgconfig, zlib-devel
+BuildRequires: perl, db4-devel, pkgconfig, zlib-devel
 
 Requires: setup >= 2.5.36-1
 BuildRequires: setup >= 2.5.36-1
@@ -466,6 +466,11 @@ exit 0
 
 
 %changelog
+* Tue Jun  5 2007 Thomas Woerner <twoerner@redhat.com> 2:2.4.3-1
+- new stable version 2.4.3
+- enabled mysql support
+- dropped build requirements for gawk, ed and sed
+
 * Tue Jan 23 2007 Thomas Woerner <twoerner@redhat.com> 2:2.3.6-1
 - new version 2.3.6
 - limiting SASL mechanisms to plain login for sasl with saslauthd (#175259)
