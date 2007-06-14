@@ -1,16 +1,12 @@
 %define LDAP 2
-%define MYSQL 1
+%define MYSQL 0
+%define PGSQL 0
 %define PCRE 1
 %define SASL 2
 %define TLS 1
 %define IPV6 1
 %define POSTDROP_GID 90
 %define PFLOGSUMM 1
-
-# On Redhat 8.0.1 and earlier, LDAP is compiled with SASL V1 and won't work
-# if postfix is compiled with SASL V2. So we drop to SASL V1 if LDAP is
-# requested but use the preferred SASL V2 if LDAP is not requested.
-# Sometime soon LDAP will build agains SASL V2 and this won't be needed.
 
 %if %{LDAP} == 1 && %{SASL} >= 2
 %undefine SASL
@@ -24,35 +20,38 @@
 # Postfix requires one exlusive uid/gid and a 2nd exclusive gid for its own
 # use.  Let me know if the second gid collides with another package.
 # Be careful: Redhat's 'mail' user & group isn't unique!
-%define postfix_uid    89
-%define postfix_user   postfix
-%define postfix_gid    89
-%define postfix_group  postfix
-%define postdrop_group postdrop
-%define maildrop_group %{postdrop_group}
-%define maildrop_gid   %{POSTDROP_GID}
+%define postfix_uid	89
+%define postfix_user	postfix
+%define postfix_gid	89
+%define postfix_group	postfix
+%define postdrop_group	postdrop
+%define maildrop_group	%{postdrop_group}
+%define maildrop_gid	%{POSTDROP_GID}
 
-%define postfix_config_dir  %{_sysconfdir}/postfix
-%define postfix_daemon_dir  %{_libexecdir}/postfix
-%define postfix_command_dir %{_sbindir}
-%define postfix_queue_dir   %{_var}/spool/postfix
-%define postfix_doc_dir     %{_docdir}/%{name}-%{version}
-%define postfix_sample_dir  %{postfix_doc_dir}/samples
-%define postfix_readme_dir  %{postfix_doc_dir}/README_FILES
+%define postfix_config_dir	%{_sysconfdir}/postfix
+%define postfix_daemon_dir	%{_libexecdir}/postfix
+%define postfix_command_dir	%{_sbindir}
+%define postfix_queue_dir	%{_var}/spool/postfix
+%define postfix_doc_dir		%{_docdir}/%{name}-%{version}
+%define postfix_sample_dir	%{postfix_doc_dir}/samples
+%define postfix_readme_dir	%{postfix_doc_dir}/README_FILES
 
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.4.3
-Release: 1%{dist}
+Release: 2%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
 License: IBM Public License
-PreReq: /sbin/chkconfig, /sbin/service, sh-utils
-PreReq: fileutils, textutils,
-PreReq: /usr/sbin/alternatives
-
-PreReq: %{_sbindir}/groupadd, %{_sbindir}/useradd
+Requires(post): /sbin/chkconfig
+Requires(post): %{_sbindir}/alternatives
+Requires(pre): %{_sbindir}/groupadd
+Requires(pre): %{_sbindir}/useradd
+Requires(preun): /sbin/chkconfig
+Requires(preun): /sbin/service
+Requires(preun): %{_sbindir}/alternatives
+Requires(postun): /sbin/service
 
 Provides: MTA smtpd smtpdaemon /usr/bin/newaliases
 
@@ -84,10 +83,10 @@ Patch9: postfix-2.4.0-cyrus.patch
 # Optional patches - set the appropriate environment variables to include
 #                    them when building the package/spec file
 
-BuildRoot: %{_tmppath}/%{name}-buildroot
+BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 # Determine the different packages required for building postfix
-BuildRequires: perl, db4-devel, pkgconfig, zlib-devel
+BuildRequires: db4-devel, pkgconfig, zlib-devel
 
 Requires: setup >= 2.5.36-1
 BuildRequires: setup >= 2.5.36-1
@@ -112,6 +111,11 @@ Requires: mysql
 BuildRequires: mysql, mysql-devel
 %endif
 
+%if %{PGSQL}
+Requires: postgresql-libs
+BuildRequires: postgresql-devel
+%endif
+
 %if %{TLS}
 Requires: openssl
 BuildRequires: openssl-devel >= 0.9.6
@@ -124,8 +128,6 @@ Postfix is a Mail Transport Agent (MTA), supporting LDAP, SMTP AUTH (SASL),
 TLS
 
 %prep
-umask 022
-
 %setup -q
 # Apply obligatory patches
 %patch1 -p1 -b .config
@@ -147,7 +149,7 @@ popd
 %package pflogsumm
 Group: System Environment/Daemons
 Summary: A Log Summarizer/Analyzer for the Postfix MTA
-Requires: perl-Date-Calc
+Requires: postfix = %{version}-%{release}
 %description pflogsumm
 Pflogsumm is a log analyzer/summarizer for the Postfix MTA.  It is
 designed to provide an over-view of Postfix activity. Pflogsumm
@@ -158,8 +160,6 @@ warnings, errors and panics.
 %endif
 
 %build
-umask 022
-
 CCARGS=-fPIC
 AUXLIBS=
 
@@ -179,6 +179,10 @@ CCARGS="${CCARGS} -fsigned-char"
 %if %{MYSQL}
   CCARGS="${CCARGS} -DHAS_MYSQL -I/usr/include/mysql"
   AUXLIBS="${AUXLIBS} -L%{_libdir}/mysql -lmysqlclient -lm"
+%endif
+%if %{PGSQL}
+  CCARGS="${CCARGS} -DHAS_PGSQL -I/usr/include/pgsql"
+  AUXLIBS="${AUXLIBS} -lpq"
 %endif
 %if %{SASL}
   %define sasl_v1_lib_dir %{_libdir}/sasl
@@ -212,10 +216,9 @@ export CCARGS AUXLIBS
 make -f Makefile.init makefiles
 
 unset CCARGS AUXLIBS
-make DEBUG="" OPT="$RPM_OPT_FLAGS"
+make %{?_smp_mflags} DEBUG="" OPT="$RPM_OPT_FLAGS"
 
 %install
-umask 022
 /bin/rm -rf   $RPM_BUILD_ROOT
 /bin/mkdir -p $RPM_BUILD_ROOT
 
@@ -244,8 +247,7 @@ sh postfix-install -non-interactive \
 
 # This installs into the /etc/rc.d/init.d directory
 /bin/mkdir -p $RPM_BUILD_ROOT/etc/rc.d/init.d
-install -c %{_sourcedir}/postfix-etc-init.d-postfix \
-                  $RPM_BUILD_ROOT/etc/rc.d/init.d/postfix
+install -c %{SOURCE1} $RPM_BUILD_ROOT/etc/rc.d/init.d/postfix
 
 install -c auxiliary/rmail/rmail $RPM_BUILD_ROOT%{_bindir}/rmail.postfix
 
@@ -306,8 +308,6 @@ ln -sf ../sbin/sendmail.postfix .
 popd
 
 %post
-umask 022
-
 /sbin/chkconfig --add postfix
 
 # upgrade configuration files if necessary
@@ -342,13 +342,11 @@ umask 022
 exit 0
 
 %preun
-umask 022
-
 if [ "$1" = 0 ]; then
     # stop postfix silently, but only if it's running
     /sbin/service postfix stop &>/dev/null
     /sbin/chkconfig --del postfix
-    /usr/sbin/alternatives --remove mta %{postfix_command_dir}/sendmail.postfix
+    %{_sbindir}/alternatives --remove mta %{postfix_command_dir}/sendmail.postfix
 fi
 
 exit 0
@@ -381,7 +379,7 @@ exit 0
 %config(noreplace) %{sasl_v2_lib_dir}/smtpd.conf
 %endif
 %config(noreplace) %{_sysconfdir}/pam.d/smtp.postfix
-%attr(0755, root, root) %config /etc/rc.d/init.d/postfix
+%attr(0755, root, root) /etc/rc.d/init.d/postfix
 
 # Misc files
 
@@ -466,7 +464,13 @@ exit 0
 
 
 %changelog
-* Tue Jun  5 2007 Thomas Woerner <twoerner@redhat.com> 2:2.4.3-1%{dist}
+* Thu Jun 14 2007 Thomas Woerner <twoerner@redhat.com> 2:2.4.3-2
+- diabled mysql support again (rhbz#185515)
+- added support flag for PostgreSQL build (rhbz#180579)
+  Ben: Thanks for the patch
+- Fixed remaining rewiew problems (rhbz#226307)
+
+* Tue Jun  5 2007 Thomas Woerner <twoerner@redhat.com> 2:2.4.3-1
 - allow to build without LDAP but SASL2 support (rhbz#216792)
 
 * Tue Jun  5 2007 Thomas Woerner <twoerner@redhat.com> 2:2.4.3-1
@@ -835,7 +839,7 @@ exit 0
 
 * Wed Feb 20 2002 Bernhard Rosenkraenzer <bero@redhat.com> 1.1.3-2
 - listen on 127.0.0.1 only by default (#60071)
-- Put config samples in %{_docdir}/%{name}-%{version} rather than
+- Put config samples in %%{_docdir}/%%{name}-%%{version} rather than
   /etc/postfix (#60072)
 - Some spec file cleanups
 

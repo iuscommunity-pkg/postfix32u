@@ -2,7 +2,7 @@
 #
 # postfix      Postfix Mail Transfer Agent
 #
-# chkconfig: 2345 80 30
+# chkconfig: - 80 30
 # description: Postfix is a Mail Transport Agent, which is the program \
 #              that moves mail from one machine to another.
 # processname: master
