@@ -39,7 +39,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.4.3
-Release: 2%{?dist}
+Release: 3%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -149,7 +149,7 @@ popd
 %package pflogsumm
 Group: System Environment/Daemons
 Summary: A Log Summarizer/Analyzer for the Postfix MTA
-Requires: postfix = %{version}-%{release}
+Requires: postfix = %{epoch}:%{version}-%{release}
 %description pflogsumm
 Pflogsumm is a log analyzer/summarizer for the Postfix MTA.  It is
 designed to provide an over-view of Postfix activity. Pflogsumm
@@ -464,6 +464,9 @@ exit 0
 
 
 %changelog
+* Fri Jun 15 2007 Thomas Woerner <twoerner@redhat.com> 2:2.4.3-3
+- added missing epoch in requirement of pflogsumm sub package
+
 * Thu Jun 14 2007 Thomas Woerner <twoerner@redhat.com> 2:2.4.3-2
 - diabled mysql support again (rhbz#185515)
 - added support flag for PostgreSQL build (rhbz#180579)
