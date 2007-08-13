@@ -38,8 +38,8 @@
 
 Name: postfix
 Summary: Postfix Mail Transport Agent
-Version: 2.4.3
-Release: 3%{?dist}
+Version: 2.4.5
+Release: 1%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -79,6 +79,7 @@ Patch6: postfix-2.1.1-obsolete.patch
 Patch7: postfix-2.1.5-aliases.patch
 Patch8: postfix-large-fs.patch
 Patch9: postfix-2.4.0-cyrus.patch
+Patch10: postfix-2.4.5-open_define.patch
 
 # Optional patches - set the appropriate environment variables to include
 #                    them when building the package/spec file
@@ -136,6 +137,7 @@ TLS
 %patch7 -p1 -b .aliases
 %patch8 -p1 -b .large-fs
 %patch9 -p1 -b .cyrus
+%patch10 -p1 -b .open_define
 
 %if %{PFLOGSUMM}
 gzip -dc %{SOURCE53} | tar xf -
@@ -464,6 +466,10 @@ exit 0
 
 
 %changelog
+* Mon Aug 13 2007 Thomas Woerner <twoerner@redhat.com> 2:2.4.5-1
+- new version 2.4.5
+- fixed compile proplem with glibc-2.6.90+
+
 * Fri Jun 15 2007 Thomas Woerner <twoerner@redhat.com> 2:2.4.3-3
 - added missing epoch in requirement of pflogsumm sub package
 
