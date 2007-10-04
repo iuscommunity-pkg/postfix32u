@@ -39,7 +39,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.4.5
-Release: 1%{?dist}
+Release: 2%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -466,6 +466,10 @@ exit 0
 
 
 %changelog
+* Thu Oct  4 2007 Thomas Woerner <twoerner@redhat.com> 2:2.4.5-2
+- made init script lsb conform (#243286, rhbz#247025)
+- added link to postfix sasl readme into Postfix-SASL-RedHat readme
+
 * Mon Aug 13 2007 Thomas Woerner <twoerner@redhat.com> 2:2.4.5-1
 - new version 2.4.5
 - fixed compile proplem with glibc-2.6.90+

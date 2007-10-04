@@ -458,6 +458,8 @@ and Mozilla.
 Other Sources of Documentation:
 -------------------------------
 
+/usr/share/doc/postfix-<version>/README_FILES/SASL_README
+
 Local configuration examples:
 
 /usr/share/doc/postfix-*/samples
