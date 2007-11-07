@@ -1,5 +1,5 @@
 %define LDAP 2
-%define MYSQL 0
+%define MYSQL 1
 %define PGSQL 0
 %define PCRE 1
 %define SASL 2
@@ -39,7 +39,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.4.5
-Release: 2%{?dist}
+Release: 3%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -108,8 +108,8 @@ BuildRequires: pcre, pcre-devel
 %endif
 
 %if %{MYSQL}
-Requires: mysql
-BuildRequires: mysql, mysql-devel
+Requires: mysql-libs
+BuildRequires: mysql-devel
 %endif
 
 %if %{PGSQL}
@@ -138,6 +138,9 @@ TLS
 %patch8 -p1 -b .large-fs
 %patch9 -p1 -b .cyrus
 %patch10 -p1 -b .open_define
+
+# resolve multilib conflict for makedefs.out: rename to makedefs.out-%{_arch}
+perl -pi -e "s/makedefs.out/makedefs.out-%{_arch}/g" conf/postfix-files Makefile.in */Makefile.in */*/Makefile.in HISTORY
 
 %if %{PFLOGSUMM}
 gzip -dc %{SOURCE53} | tar xf -
@@ -442,7 +445,7 @@ exit 0
 %attr(0644, root, root) %config(noreplace) %{postfix_config_dir}/header_checks
 %attr(0644, root, root) %config(noreplace) %{postfix_config_dir}/main.cf
 %attr(0644, root, root) %{postfix_config_dir}/main.cf.default
-%attr(0644, root, root) %config(noreplace) %{postfix_config_dir}/makedefs.out
+%attr(0644, root, root) %config(noreplace) %{postfix_config_dir}/makedefs.out-*
 %attr(0644, root, root) %config(noreplace) %{postfix_config_dir}/master.cf
 %attr(0755, root, root) %{postfix_config_dir}/post-install
 %attr(0644, root, root) %{postfix_config_dir}/postfix-files
@@ -466,6 +469,11 @@ exit 0
 
 
 %changelog
+* Wed Nov  7 2007 Thomas Woerner <twoerner@redhat.com> 2:2.4.5-3
+- fixed multilib conflict for makedefs.out: rename to makedefs.out-%{_arch}
+  (rhbz#342941)
+- enabled mysql support
+
 * Thu Oct  4 2007 Thomas Woerner <twoerner@redhat.com> 2:2.4.5-2
 - made init script lsb conform (#243286, rhbz#247025)
 - added link to postfix sasl readme into Postfix-SASL-RedHat readme
