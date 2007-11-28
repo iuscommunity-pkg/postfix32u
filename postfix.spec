@@ -38,8 +38,8 @@
 
 Name: postfix
 Summary: Postfix Mail Transport Agent
-Version: 2.4.5
-Release: 3%{?dist}
+Version: 2.4.6
+Release: 1%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -53,7 +53,7 @@ Requires(preun): /sbin/service
 Requires(preun): %{_sbindir}/alternatives
 Requires(postun): /sbin/service
 
-Provides: MTA smtpd smtpdaemon /usr/bin/newaliases
+Provides: MTA smtpd smtpdaemon server(smtp) /usr/bin/newaliases
 
 Source0: ftp://ftp.porcupine.org/mirrors/postfix-release/official/%{name}-%{version}.tar.gz
 Source1: postfix-etc-init.d-postfix
@@ -305,12 +305,23 @@ mantools/srctoman - auxiliary/qshape/qshape.pl > qshape.1
 install -c qshape.1 $RPM_BUILD_ROOT%{_mandir}/man1/qshape.1
 install -c auxiliary/qshape/qshape.pl $RPM_BUILD_ROOT%{postfix_command_dir}/qshape
 
-rm -f $RPM_BUILD_ROOT/etc/postfix/aliases
+# remove alias file
+rm -f $RPM_BUILD_ROOT%{postfix_config_dir}/aliases
 
+# create /usr/lib/sendmail
 mkdir -p $RPM_BUILD_ROOT/usr/lib
 pushd $RPM_BUILD_ROOT/usr/lib
 ln -sf ../sbin/sendmail.postfix .
 popd
+
+# enable all protocols
+cat >> $RPM_BUILD_ROOT%{postfix_config_dir}/main.cf <<EOF
+# You must stop/start Postfix after changing this parameter.
+#inet_protocols = ipv4       (DEFAULT: enable IPv4 only)
+inet_protocols = all        (enable IPv4, and IPv6 if supported)
+#inet_protocols = ipv4, ipv6 (enable both IPv4 and IPv6)
+#inet_protocols = ipv6       (enable IPv6 only)
+EOF
 
 %post
 /sbin/chkconfig --add postfix
@@ -469,6 +480,11 @@ exit 0
 
 
 %changelog
+* Wed Nov 28 2007 Thomas Woerner <twoerner@redhat.com> 2:2.4.6-1
+- new verison 2.4.6
+- added virtual server(smtp) provide (rhbz#380631)
+- enabling IPv6 support (rhbz#197105)
+
 * Wed Nov  7 2007 Thomas Woerner <twoerner@redhat.com> 2:2.4.5-3
 - fixed multilib conflict for makedefs.out: rename to makedefs.out-%{_arch}
   (rhbz#342941)
