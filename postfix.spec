@@ -1,6 +1,6 @@
+%{?!MYSQL: %define MYSQL 1}
+%{?!PGSQL: %define PGSQL 0}
 %define LDAP 2
-%define MYSQL 1
-%define PGSQL 0
 %define PCRE 1
 %define SASL 2
 %define TLS 1
@@ -484,6 +484,7 @@ exit 0
 - new verison 2.4.6
 - added virtual server(smtp) provide (rhbz#380631)
 - enabling IPv6 support (rhbz#197105)
+- made the MYSQL and PGSQL defines overloadable as build argument
 
 * Wed Nov  7 2007 Thomas Woerner <twoerner@redhat.com> 2:2.4.5-3
 - fixed multilib conflict for makedefs.out: rename to makedefs.out-%{_arch}
