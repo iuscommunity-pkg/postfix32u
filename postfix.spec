@@ -39,7 +39,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.4.6
-Release: 2%{?dist}
+Release: 3%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -480,6 +480,9 @@ exit 0
 
 
 %changelog
+* Wed Feb 20 2008 Fedora Release Engineering <rel-eng@fedoraproject.org> - 2:2.4.6-3
+- Autorebuild for GCC 4.3
+
 * Thu Dec 06 2007 Release Engineering <rel-eng at fedoraproject dot org> - 2.4.6-2
 - Rebuild for deps
 
