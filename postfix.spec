@@ -38,8 +38,8 @@
 
 Name: postfix
 Summary: Postfix Mail Transport Agent
-Version: 2.4.6
-Release: 3%{?dist}
+Version: 2.5.1
+Release: 1%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -480,6 +480,9 @@ exit 0
 
 
 %changelog
+* Thu Feb 21 2008 Thomas Woerner <twoerner@redhat.com> 2:2.5.1-1
+- new verison 2.5.1
+
 * Wed Feb 20 2008 Fedora Release Engineering <rel-eng@fedoraproject.org> - 2:2.4.6-3
 - Autorebuild for GCC 4.3
 
