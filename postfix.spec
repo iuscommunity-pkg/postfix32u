@@ -32,6 +32,7 @@
 %define postfix_daemon_dir	%{_libexecdir}/postfix
 %define postfix_command_dir	%{_sbindir}
 %define postfix_queue_dir	%{_var}/spool/postfix
+%define postfix_data_dir	%{_var}/lib/postfix
 %define postfix_doc_dir		%{_docdir}/%{name}-%{version}
 %define postfix_sample_dir	%{postfix_doc_dir}/samples
 %define postfix_readme_dir	%{postfix_doc_dir}/README_FILES
@@ -39,7 +40,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.5.1
-Release: 1%{?dist}
+Release: 2%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -241,6 +242,7 @@ sh postfix-install -non-interactive \
        daemon_directory=%{postfix_daemon_dir} \
        command_directory=%{postfix_command_dir} \
        queue_directory=%{postfix_queue_dir} \
+       data_directory=%{postfix_data_dir} \
        sendmail_path=%{postfix_command_dir}/sendmail.postfix \
        newaliases_path=%{_bindir}/newaliases.postfix \
        mailq_path=%{_bindir}/mailq.postfix \
@@ -316,11 +318,8 @@ popd
 
 # enable all protocols
 cat >> $RPM_BUILD_ROOT%{postfix_config_dir}/main.cf <<EOF
-# You must stop/start Postfix after changing this parameter.
-#inet_protocols = ipv4       (DEFAULT: enable IPv4 only)
-inet_protocols = all        (enable IPv4, and IPv6 if supported)
-#inet_protocols = ipv4, ipv6 (enable both IPv4 and IPv6)
-#inet_protocols = ipv6       (enable IPv6 only)
+# Enable IPv4, and IPv6 if supported
+inet_protocols = all
 EOF
 
 %post
@@ -430,6 +429,7 @@ exit 0
 %dir %attr(0755, root, root) %{postfix_queue_dir}/pid
 %dir %attr(0700, %{postfix_user}, root) %{postfix_queue_dir}/private
 %dir %attr(0710, %{postfix_user}, %{maildrop_group}) %{postfix_queue_dir}/public
+%dir %attr(0700, %{postfix_user}, root) %{postfix_data_dir}
 
 %attr(0644, root, root) %{_mandir}/man1/[a-n]*
 %attr(0644, root, root) %{_mandir}/man1/post*
@@ -480,6 +480,10 @@ exit 0
 
 
 %changelog
+* Wed Mar 12 2008 Thomas Woerner <twoerner@redhat.com> 2:2.5.1-2
+- fixed fix for enabling IPv6 support (rhbz#437024)
+- added new postfix data directory (rhbz#437042)
+
 * Thu Feb 21 2008 Thomas Woerner <twoerner@redhat.com> 2:2.5.1-1
 - new verison 2.5.1
 
