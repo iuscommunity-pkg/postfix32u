@@ -40,7 +40,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.5.1
-Release: 2%{?dist}
+Release: 3%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -81,6 +81,7 @@ Patch7: postfix-2.1.5-aliases.patch
 Patch8: postfix-large-fs.patch
 Patch9: postfix-2.4.0-cyrus.patch
 Patch10: postfix-2.4.5-open_define.patch
+Patch11: postfix-CVE-2008-2936.patch
 
 # Optional patches - set the appropriate environment variables to include
 #                    them when building the package/spec file
@@ -139,6 +140,7 @@ TLS
 %patch8 -p1 -b .large-fs
 %patch9 -p1 -b .cyrus
 %patch10 -p1 -b .open_define
+%patch11 -p1 -b .CVE-2008-2936
 
 # resolve multilib conflict for makedefs.out: rename to makedefs.out-%{_arch}
 perl -pi -e "s/makedefs.out/makedefs.out-%{_arch}/g" conf/postfix-files Makefile.in */Makefile.in */*/Makefile.in HISTORY
@@ -480,6 +482,10 @@ exit 0
 
 
 %changelog
+* Thu Aug 14 2008 Thomas Woerner <twoerner@redhat.com> 2:2.5.1-3
+- fixed postfix privilege problem with symlinks in the mail spool directory
+  (CVE-2008-2936) (rhbz#459101)
+
 * Wed Mar 12 2008 Thomas Woerner <twoerner@redhat.com> 2:2.5.1-2
 - fixed fix for enabling IPv6 support (rhbz#437024)
 - added new postfix data directory (rhbz#437042)
