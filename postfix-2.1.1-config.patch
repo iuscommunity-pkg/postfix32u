@@ -1,6 +1,7 @@
---- postfix-2.1.1/conf/main.cf.config	2004-04-15 15:27:21.000000000 +0200
-+++ postfix-2.1.1/conf/main.cf	2004-05-24 17:48:09.621348587 +0200
-@@ -106,6 +106,7 @@
+diff -up postfix-2.5.1/conf/main.cf.config postfix-2.5.1/conf/main.cf
+--- postfix-2.5.1/conf/main.cf.config	2007-12-18 08:50:25.000000000 -0500
++++ postfix-2.5.1/conf/main.cf	2008-08-28 17:22:21.000000000 -0400
+@@ -113,6 +113,7 @@ mail_owner = postfix
  #inet_interfaces = all
  #inet_interfaces = $myhostname
  #inet_interfaces = $myhostname, localhost
@@ -8,7 +9,7 @@
  
  # The proxy_interfaces parameter specifies the network interface
  # addresses that this mail system receives mail on by way of a
-@@ -150,7 +151,7 @@
+@@ -157,7 +158,7 @@ mail_owner = postfix
  #
  # See also below, section "REJECTING MAIL FOR UNKNOWN LOCAL USERS".
  #
@@ -17,7 +18,7 @@
  #mydestination = $myhostname, localhost.$mydomain, localhost, $mydomain
  #mydestination = $myhostname, localhost.$mydomain, localhost, $mydomain,
  #	mail.$mydomain, www.$mydomain, ftp.$mydomain
-@@ -372,7 +373,7 @@
+@@ -379,7 +380,7 @@ unknown_local_recipient_reject_code = 55
  # "postfix reload" to eliminate the delay.
  #
  #alias_maps = dbm:/etc/aliases
@@ -26,9 +27,10 @@
  #alias_maps = hash:/etc/aliases, nis:mail.aliases
  #alias_maps = netinfo:/aliases
  
---- postfix-2.1.1/conf/postfix-files.config	2004-05-24 17:29:30.002936514 +0200
-+++ postfix-2.1.1/conf/postfix-files	2004-05-24 17:50:24.548253843 +0200
-@@ -118,8 +118,8 @@
+diff -up postfix-2.5.1/conf/postfix-files.config postfix-2.5.1/conf/postfix-files
+--- postfix-2.5.1/conf/postfix-files.config	2008-01-23 19:13:49.000000000 -0500
++++ postfix-2.5.1/conf/postfix-files	2008-08-28 17:24:37.000000000 -0400
+@@ -128,8 +128,8 @@ $config_directory/postfix-script:f:root:
  $config_directory/postfix-script-sgid:f:root:-:755:o
  $config_directory/postfix-script-nosgid:f:root:-:755:o
  $config_directory/post-install:f:root:-:755
@@ -39,7 +41,7 @@
  $manpage_directory/man1/postalias.1:f:root:-:644
  $manpage_directory/man1/postcat.1:f:root:-:644
  $manpage_directory/man1/postconf.1:f:root:-:644
-@@ -131,9 +131,9 @@
+@@ -141,9 +141,9 @@ $manpage_directory/man1/postlog.1:f:root
  $manpage_directory/man1/postmap.1:f:root:-:644
  $manpage_directory/man1/postqueue.1:f:root:-:644
  $manpage_directory/man1/postsuper.1:f:root:-:644
@@ -49,5 +51,5 @@
 -$manpage_directory/man5/aliases.5:f:root:-:644
 +$manpage_directory/man5/aliases.postfix.5:f:root:-:644
  $manpage_directory/man5/body_checks.5:f:root:-:644
+ $manpage_directory/man5/bounce.5:f:root:-:644
  $manpage_directory/man5/canonical.5:f:root:-:644
- $manpage_directory/man5/cidr_table.5:f:root:-:644

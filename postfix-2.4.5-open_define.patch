@@ -1,27 +1,40 @@
-diff -up postfix-2.4.5/src/util/dict_open.c.open_define postfix-2.4.5/src/util/dict_open.c
---- postfix-2.4.5/src/util/dict_open.c.open_define	2006-06-26 14:59:19.000000000 +0200
-+++ postfix-2.4.5/src/util/dict_open.c	2007-08-13 18:46:18.000000000 +0200
-@@ -302,7 +302,7 @@ DICT   *dict_open3(const char *dict_type
- 	dict_open_init();
-     if ((dp = (DICT_OPEN_INFO *) htable_find(dict_open_hash, dict_type)) == 0)
- 	msg_fatal("unsupported dictionary type: %s", dict_type);
--    if ((dict = dp->open(dict_name, open_flags, dict_flags)) == 0)
-+    if ((dict = (dp->open)(dict_name, open_flags, dict_flags)) == 0)
- 	msg_fatal("opening %s:%s %m", dict_type, dict_name);
-     if (msg_verbose)
- 	msg_info("%s: %s:%s", myname, dict_type, dict_name);
-@@ -323,7 +323,7 @@ void    dict_open_register(const char *t
- 	msg_panic("%s: dictionary type exists: %s", myname, type);
-     dp = (DICT_OPEN_INFO *) mymalloc(sizeof(*dp));
-     dp->type = mystrdup(type);
--    dp->open = open;
-+    (dp->open) = open;
-     htable_enter(dict_open_hash, dp->type, (char *) dp);
- }
+diff -up postfix-2.5.1/src/global/mail_dict.c.open_define postfix-2.5.1/src/global/mail_dict.c
+--- postfix-2.5.1/src/global/mail_dict.c.open_define	2008-01-08 16:07:47.000000000 -0500
++++ postfix-2.5.1/src/global/mail_dict.c	2008-08-28 17:26:30.000000000 -0400
+@@ -64,5 +64,5 @@ void    mail_dict_init(void)
+     const DICT_OPEN_INFO *dp;
  
-diff -up postfix-2.4.5/src/util/dict_db.c.open_define postfix-2.4.5/src/util/dict_db.c
---- postfix-2.4.5/src/util/dict_db.c.open_define	2007-01-04 15:06:07.000000000 +0100
-+++ postfix-2.4.5/src/util/dict_db.c	2007-08-13 18:46:18.000000000 +0200
+     for (dp = dict_open_info; dp->type; dp++)
+-	dict_open_register(dp->type, dp->open);
++	dict_open_register(dp->type, (dp->open));
+ }
+diff -up postfix-2.5.1/src/global/mkmap_cdb.c.open_define postfix-2.5.1/src/global/mkmap_cdb.c
+--- postfix-2.5.1/src/global/mkmap_cdb.c.open_define	2004-12-08 18:58:05.000000000 -0500
++++ postfix-2.5.1/src/global/mkmap_cdb.c	2008-08-28 17:25:23.000000000 -0400
+@@ -56,7 +56,7 @@
+ MKMAP *mkmap_cdb_open(const char *unused_path)
+ {
+     MKMAP  *mkmap = (MKMAP *) mymalloc(sizeof(*mkmap));
+-    mkmap->open = dict_cdb_open;
++    (mkmap->open) = dict_cdb_open;
+     mkmap->after_open = 0;
+     mkmap->after_close = 0;
+     return (mkmap);
+diff -up postfix-2.5.1/src/global/mkmap_open.c.open_define postfix-2.5.1/src/global/mkmap_open.c
+--- postfix-2.5.1/src/global/mkmap_open.c.open_define	2008-01-08 17:08:45.000000000 -0500
++++ postfix-2.5.1/src/global/mkmap_open.c	2008-08-28 17:25:23.000000000 -0400
+@@ -181,7 +181,7 @@ MKMAP  *mkmap_open(const char *type, con
+      * Truncate the database upon open, and update it. Read-write mode is
+      * needed because the underlying routines read as well as write.
+      */
+-    mkmap->dict = mkmap->open(path, open_flags, dict_flags);
++    mkmap->dict = (mkmap->open)(path, open_flags, dict_flags);
+     mkmap->dict->lock_fd = -1;			/* XXX just in case */
+     mkmap->dict->stat_fd = -1;			/* XXX just in case */
+     mkmap->dict->flags |= DICT_FLAG_DUP_WARN;
+diff -up postfix-2.5.1/src/util/dict_db.c.open_define postfix-2.5.1/src/util/dict_db.c
+--- postfix-2.5.1/src/util/dict_db.c.open_define	2007-01-04 09:06:07.000000000 -0500
++++ postfix-2.5.1/src/util/dict_db.c	2008-08-28 17:25:23.000000000 -0400
 @@ -665,10 +665,10 @@ static DICT *dict_db_open(const char *cl
      if (type == DB_HASH && db->set_h_nelem(db, DICT_DB_NELM) != 0)
  	msg_fatal("set DB hash element count %d: %m", DICT_DB_NELM);
@@ -35,37 +48,24 @@ diff -up postfix-2.4.5/src/util/dict_db.c.open_define postfix-2.4.5/src/util/dic
  	msg_fatal("open database %s: %m", db_path);
  #else
  #error "Unsupported Berkeley DB version"
-diff -up postfix-2.4.5/src/global/mkmap_open.c.open_define postfix-2.4.5/src/global/mkmap_open.c
---- postfix-2.4.5/src/global/mkmap_open.c.open_define	2004-12-15 01:24:22.000000000 +0100
-+++ postfix-2.4.5/src/global/mkmap_open.c	2007-08-13 18:46:18.000000000 +0200
-@@ -177,7 +177,7 @@ MKMAP  *mkmap_open(const char *type, con
-      * Truncate the database upon open, and update it. Read-write mode is
-      * needed because the underlying routines read as well as write.
-      */
--    mkmap->dict = mkmap->open(path, open_flags, dict_flags);
-+    mkmap->dict = (mkmap->open)(path, open_flags, dict_flags);
-     mkmap->dict->lock_fd = -1;			/* XXX just in case */
-     mkmap->dict->stat_fd = -1;			/* XXX just in case */
-     mkmap->dict->flags |= DICT_FLAG_DUP_WARN;
-diff -up postfix-2.4.5/src/global/mkmap_cdb.c.open_define postfix-2.4.5/src/global/mkmap_cdb.c
---- postfix-2.4.5/src/global/mkmap_cdb.c.open_define	2004-12-09 00:58:05.000000000 +0100
-+++ postfix-2.4.5/src/global/mkmap_cdb.c	2007-08-13 18:46:18.000000000 +0200
-@@ -56,7 +56,7 @@
- MKMAP *mkmap_cdb_open(const char *unused_path)
- {
-     MKMAP  *mkmap = (MKMAP *) mymalloc(sizeof(*mkmap));
--    mkmap->open = dict_cdb_open;
-+    (mkmap->open) = dict_cdb_open;
-     mkmap->after_open = 0;
-     mkmap->after_close = 0;
-     return (mkmap);
-diff -up postfix-2.4.5/src/global/mail_dict.c.open_define postfix-2.4.5/src/global/mail_dict.c
---- postfix-2.4.5/src/global/mail_dict.c.open_define	2004-01-04 19:53:27.000000000 +0100
-+++ postfix-2.4.5/src/global/mail_dict.c	2007-08-13 18:46:18.000000000 +0200
-@@ -64,5 +64,5 @@ void    mail_dict_init(void)
-     DICT_OPEN_INFO *dp;
- 
-     for (dp = dict_open_info; dp->type; dp++)
--	dict_open_register(dp->type, dp->open);
-+      dict_open_register(dp->type, (dp->open));
+diff -up postfix-2.5.1/src/util/dict_open.c.open_define postfix-2.5.1/src/util/dict_open.c
+--- postfix-2.5.1/src/util/dict_open.c.open_define	2008-01-08 16:05:20.000000000 -0500
++++ postfix-2.5.1/src/util/dict_open.c	2008-08-28 17:25:23.000000000 -0400
+@@ -305,7 +305,7 @@ DICT   *dict_open3(const char *dict_type
+ 	dict_open_init();
+     if ((dp = (DICT_OPEN_INFO *) htable_find(dict_open_hash, dict_type)) == 0)
+ 	msg_fatal("unsupported dictionary type: %s", dict_type);
+-    if ((dict = dp->open(dict_name, open_flags, dict_flags)) == 0)
++    if ((dict = (dp->open)(dict_name, open_flags, dict_flags)) == 0)
+ 	msg_fatal("opening %s:%s %m", dict_type, dict_name);
+     if (msg_verbose)
+ 	msg_info("%s: %s:%s", myname, dict_type, dict_name);
+@@ -326,7 +326,7 @@ void    dict_open_register(const char *t
+ 	msg_panic("%s: dictionary type exists: %s", myname, type);
+     dp = (DICT_OPEN_INFO *) mymalloc(sizeof(*dp));
+     dp->type = mystrdup(type);
+-    dp->open = open;
++    (dp->open) = open;
+     htable_enter(dict_open_hash, dp->type, (char *) dp);
  }
+ 

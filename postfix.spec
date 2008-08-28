@@ -40,11 +40,11 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.5.1
-Release: 3%{?dist}
+Release: 4%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
-License: IBM Public License
+License: IBM
 Requires(post): /sbin/chkconfig
 Requires(post): %{_sbindir}/alternatives
 Requires(pre): %{_sbindir}/groupadd
@@ -482,6 +482,9 @@ exit 0
 
 
 %changelog
+* Thu Aug 28 2008 Tom "spot" Callaway <tcallawa@redhat.com> 2:2.5.1-4
+- fix license tag
+
 * Thu Aug 14 2008 Thomas Woerner <twoerner@redhat.com> 2:2.5.1-3
 - fixed postfix privilege problem with symlinks in the mail spool directory
   (CVE-2008-2936) (rhbz#459101)
