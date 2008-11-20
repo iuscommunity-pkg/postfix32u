@@ -14,7 +14,7 @@
 %endif
 
 %if %{PFLOGSUMM}
-%define pflogsumm_ver 1.1.0
+%define pflogsumm_ver 1.1.1
 %endif
 
 # Postfix requires one exlusive uid/gid and a 2nd exclusive gid for its own
@@ -40,7 +40,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.5.5
-Release: 1%{?dist}
+Release: 2%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -80,7 +80,6 @@ Patch6: postfix-2.1.1-obsolete.patch
 Patch7: postfix-2.1.5-aliases.patch
 Patch8: postfix-large-fs.patch
 Patch9: postfix-2.4.0-cyrus.patch
-Patch10: postfix-2.4.5-open_define.patch
 
 # Optional patches - set the appropriate environment variables to include
 #                    them when building the package/spec file
@@ -129,6 +128,27 @@ Provides: /usr/sbin/sendmail /usr/bin/mailq /usr/bin/rmail
 Postfix is a Mail Transport Agent (MTA), supporting LDAP, SMTP AUTH (SASL),
 TLS
 
+%package perl-scripts
+Summary: Postfix utilities written in perl
+Group: Applications/System
+Requires: %{name} = %{epoch}:%{version}-%{release}
+# perl-scripts introduced in 2:2.5.5-2
+Obsoletes: postfix < 2:2.5.5-2
+%if %{PFLOGSUMM}
+Provides: postfix-pflogsumm = %{epoch}:%{version}-%{release}
+Obsoletes: postfix-pflogsumm < 2:2.5.5-2
+%endif
+%description perl-scripts
+This package contains perl scripts pflogsumm and qshape.
+
+Pflogsumm is a log analyzer/summarizer for the Postfix MTA. It is
+designed to provide an over-view of Postfix activity. Pflogsumm
+generates summaries and, in some cases, detailed reports of mail
+server traffic volumes, rejected and bounced email, and server
+warnings, errors and panics.
+
+qshape prints Postfix queue domain and age distribution.
+ 
 %prep
 %setup -q
 # Apply obligatory patches
@@ -138,31 +158,12 @@ TLS
 %patch7 -p1 -b .aliases
 %patch8 -p1 -b .large-fs
 %patch9 -p1 -b .cyrus
-%patch10 -p1 -b .open_define
 
 # resolve multilib conflict for makedefs.out: rename to makedefs.out-%{_arch}
 perl -pi -e "s/makedefs.out/makedefs.out-%{_arch}/g" conf/postfix-files Makefile.in */Makefile.in */*/Makefile.in HISTORY
 
 %if %{PFLOGSUMM}
 gzip -dc %{SOURCE53} | tar xf -
-pushd pflogsumm-%{pflogsumm_ver}
-patch -p0 < ../pflogsumm-conn-delays-dsn-patch
-popd
-%endif
-
-# pflogsumm subpackage
-%if %{PFLOGSUMM}
-%package pflogsumm
-Group: System Environment/Daemons
-Summary: A Log Summarizer/Analyzer for the Postfix MTA
-Requires: postfix = %{epoch}:%{version}-%{release}
-%description pflogsumm
-Pflogsumm is a log analyzer/summarizer for the Postfix MTA.  It is
-designed to provide an over-view of Postfix activity. Pflogsumm
-generates summaries and, in some cases, detailed reports of mail
-server traffic volumes, rejected and bounced email, and server
-warnings, errors and panics.
-
 %endif
 
 %build
@@ -222,7 +223,7 @@ export CCARGS AUXLIBS
 make -f Makefile.init makefiles
 
 unset CCARGS AUXLIBS
-make %{?_smp_mflags} DEBUG="" OPT="$RPM_OPT_FLAGS"
+make %{?_smp_mflags} DEBUG="" OPT="$RPM_OPT_FLAGS $(getconf LFS_CFLAGS) -Wno-comment"
 
 %install
 /bin/rm -rf   $RPM_BUILD_ROOT
@@ -231,10 +232,11 @@ make %{?_smp_mflags} DEBUG="" OPT="$RPM_OPT_FLAGS"
 # install postfix into $RPM_BUILD_ROOT
 
 # Move stuff around so we don't conflict with sendmail
-mv man/man1/mailq.1      man/man1/mailq.postfix.1
-mv man/man1/newaliases.1 man/man1/newaliases.postfix.1
-mv man/man1/sendmail.1   man/man1/sendmail.postfix.1
-mv man/man5/aliases.5    man/man5/aliases.postfix.5
+for i in man1/mailq.1 man1/newaliases.1 man1/sendmail.1 man5/aliases.5; do
+  dest=$(echo $i | sed 's|\.[1-9]$|.postfix\0|')
+  mv man/$i man/$dest
+  sed -i "s|^\.so $i|\.so $dest|" man/man?/*.[1-9]
+done
 
 sh postfix-install -non-interactive \
        install_root=$RPM_BUILD_ROOT \
@@ -402,7 +404,6 @@ exit 0
 
 %attr(0755, root, root) %{postfix_command_dir}/smtp-sink
 %attr(0755, root, root) %{postfix_command_dir}/smtp-source
-%attr(0755, root, root) %{postfix_command_dir}/qshape
 %attr(0755, root, root) /usr/lib/sendmail.postfix
 
 %dir %attr(0755, root, root) %{postfix_doc_dir}
@@ -433,7 +434,7 @@ exit 0
 
 %attr(0644, root, root) %{_mandir}/man1/[a-n]*
 %attr(0644, root, root) %{_mandir}/man1/post*
-%attr(0644, root, root) %{_mandir}/man1/[q-z]*
+%attr(0644, root, root) %{_mandir}/man1/[s-z]*
 %attr(0644, root, root) %{_mandir}/man5/*
 %attr(0644, root, root) %{_mandir}/man8/*
 
@@ -470,16 +471,26 @@ exit 0
 %attr(0755, root, root) %{_bindir}/newaliases.postfix
 %attr(0755, root, root) %{_sbindir}/sendmail.postfix
 
-%if %{PFLOGSUMM}
-%files pflogsumm
+%files perl-scripts
 %defattr(-, root, root)
-    %doc  %{postfix_doc_dir}/pflogsumm-faq.txt
-    %{_mandir}/man1/pflogsumm.1.gz
-    %attr(0755, root , root) %{postfix_command_dir}/pflogsumm
+%attr(0755, root, root) %{postfix_command_dir}/qshape
+%attr(0644, root, root) %{_mandir}/man1/qshape*
+%if %{PFLOGSUMM}
+%doc %{postfix_doc_dir}/pflogsumm-faq.txt
+%attr(0644, root, root) %{_mandir}/man1/pflogsumm.1.gz
+%attr(0755, root, root) %{postfix_command_dir}/pflogsumm
 %endif
 
-
 %changelog
+* Thu Nov 20 2008 Miroslav Lichvar <mlichvar@redhat.com> 2:2.5.5-2
+- enable Large file support on 32-bit archs (#428996)
+- fix mailq(1) and newaliases(1) man pages (#429501)
+- move pflogsumm and qshape to -perl-scripts subpackage (#467529)
+- update pflogsumm to 1.1.1
+- fix large-fs patch
+- drop open_define patch
+- add -Wno-comment to CFLAGS
+
 * Wed Sep 17 2008 Thomas Woerner <twoerner@redhat.com> 2:2.5.5-1
 - new version 2.5.5
   fixes CVE-2008-2936, CVE-2008-2937 and CVE-2008-3889 (rhbz#459101)
