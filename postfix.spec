@@ -39,8 +39,8 @@
 
 Name: postfix
 Summary: Postfix Mail Transport Agent
-Version: 2.5.5
-Release: 2%{?dist}
+Version: 2.5.6
+Release: 1%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -166,6 +166,11 @@ perl -pi -e "s/makedefs.out/makedefs.out-%{_arch}/g" conf/postfix-files Makefile
 gzip -dc %{SOURCE53} | tar xf -
 %endif
 
+for f in README_FILES/TLS_{LEGACY_,}README; do
+	iconv -f iso8859-1 -t utf8 -o ${f}{_,} &&
+		touch -r ${f}{,_} && mv -f ${f}{_,}
+done
+
 %build
 CCARGS=-fPIC
 AUXLIBS=
@@ -255,8 +260,8 @@ sh postfix-install -non-interactive \
        readme_directory=%{postfix_readme_dir} || exit 1
 
 # This installs into the /etc/rc.d/init.d directory
-/bin/mkdir -p $RPM_BUILD_ROOT/etc/rc.d/init.d
-install -c %{SOURCE1} $RPM_BUILD_ROOT/etc/rc.d/init.d/postfix
+mkdir -p $RPM_BUILD_ROOT%{_initrddir}
+install -c %{SOURCE1} $RPM_BUILD_ROOT%{_initrddir}/postfix
 
 install -c auxiliary/rmail/rmail $RPM_BUILD_ROOT%{_bindir}/rmail.postfix
 
@@ -323,6 +328,9 @@ cat >> $RPM_BUILD_ROOT%{postfix_config_dir}/main.cf <<EOF
 # Enable IPv4, and IPv6 if supported
 inet_protocols = all
 EOF
+
+mkdir -p $RPM_BUILD_ROOT%{_var}/lib/misc
+touch $RPM_BUILD_ROOT%{_var}/lib/misc/postfix.aliasesdb-stamp
 
 %post
 /sbin/chkconfig --add postfix
@@ -396,7 +404,7 @@ exit 0
 %config(noreplace) %{sasl_v2_lib_dir}/smtpd.conf
 %endif
 %config(noreplace) %{_sysconfdir}/pam.d/smtp.postfix
-%attr(0755, root, root) /etc/rc.d/init.d/postfix
+%attr(0755, root, root) %{_initrddir}/postfix
 
 # Misc files
 
@@ -470,6 +478,7 @@ exit 0
 %attr(0755, root, root) %{_bindir}/mailq.postfix
 %attr(0755, root, root) %{_bindir}/newaliases.postfix
 %attr(0755, root, root) %{_sbindir}/sendmail.postfix
+%ghost %attr(0644, root, root) %{_var}/lib/misc/postfix.aliasesdb-stamp
 
 %files perl-scripts
 %defattr(-, root, root)
@@ -482,6 +491,11 @@ exit 0
 %endif
 
 %changelog
+* Thu Jan 22 2009 Miroslav Lichvar <mlichvar@redhat.com> 2:2.5.6-1
+- update to 2.5.6 (#479108)
+- rebuild /etc/aliases.db only when necessary (#327651)
+- convert doc files to UTF-8
+
 * Thu Nov 20 2008 Miroslav Lichvar <mlichvar@redhat.com> 2:2.5.5-2
 - enable Large file support on 32-bit archs (#428996)
 - fix mailq(1) and newaliases(1) man pages (#429501)
