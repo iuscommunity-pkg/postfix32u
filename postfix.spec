@@ -40,7 +40,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.5.6
-Release: 1%{?dist}
+Release: 2%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -491,6 +491,9 @@ exit 0
 %endif
 
 %changelog
+* Fri Jan 23 2009 Miroslav Lichvar <mlichvar@redhat.com> 2:2.5.6-2
+- rebuild for new mysql
+
 * Thu Jan 22 2009 Miroslav Lichvar <mlichvar@redhat.com> 2:2.5.6-1
 - update to 2.5.6 (#479108)
 - rebuild /etc/aliases.db only when necessary (#327651)
