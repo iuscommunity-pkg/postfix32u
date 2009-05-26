@@ -36,6 +36,9 @@ prog="postfix"
 
 ALIASESDB_STAMP=/var/lib/misc/postfix.aliasesdb-stamp
 
+# Script to update chroot environment
+CHROOT_UPDATE=/etc/postfix/chroot-update
+
 status master >/dev/null 2>&1
 running=$?
 
@@ -67,6 +70,7 @@ start() {
 	# Start daemons.
 	echo -n $"Starting postfix: "
 	make_aliasesdb >/dev/null 2>&1
+	[ -x $CHROOT_UPDATE ] && $CHROOT_UPDATE
 	/usr/sbin/postfix start 2>/dev/null 1>&2 && success || failure $"$prog start"
 	RETVAL=$?
 	[ $RETVAL -eq 0 ] && touch /var/lock/subsys/postfix
@@ -88,6 +92,7 @@ stop() {
 reload() {
 	conf_check
 	echo -n $"Reloading postfix: "
+	[ -x $CHROOT_UPDATE ] && $CHROOT_UPDATE
 	/usr/sbin/postfix reload 2>/dev/null 1>&2 && success || failure $"$prog reload"
 	RETVAL=$?
 	echo
