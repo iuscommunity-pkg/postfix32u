@@ -39,7 +39,7 @@
 
 Name: postfix
 Summary: Postfix Mail Transport Agent
-Version: 2.6.1
+Version: 2.6.2
 Release: 1%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
@@ -495,6 +495,9 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Thu Jun 18 2009 Miroslav Lichvar <mlichvar@redhat.com> 2:2.6.2-1
+- update to 2.6.2
+
 * Tue May 26 2009 Miroslav Lichvar <mlichvar@redhat.com> 2:2.6.1-1
 - update to 2.6.1
 - move non-config files out of /etc/postfix (#490983)
