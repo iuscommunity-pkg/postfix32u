@@ -39,8 +39,8 @@
 
 Name: postfix
 Summary: Postfix Mail Transport Agent
-Version: 2.6.2
-Release: 3%{?dist}
+Version: 2.6.5
+Release: 1%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -495,6 +495,9 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Tue Sep 01 2009 Miroslav Lichvar <mlichvar@redhat.com> 2:2.6.5-1
+- update to 2.6.5
+
 * Fri Aug 21 2009 Tomas Mraz <tmraz@redhat.com> - 2:2.6.2-3
 - rebuilt with new openssl
 
