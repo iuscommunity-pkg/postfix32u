@@ -40,7 +40,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.6.5
-Release: 1%{?dist}
+Release: 2%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -495,6 +495,9 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Wed Sep 16 2009 Tomas Mraz <tmraz@redhat.com> - 2:2.6.5-2
+- use password-auth common PAM configuration instead of system-auth
+
 * Tue Sep 01 2009 Miroslav Lichvar <mlichvar@redhat.com> 2:2.6.5-1
 - update to 2.6.5
 
