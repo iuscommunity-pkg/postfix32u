@@ -33,13 +33,15 @@
 
 RETVAL=0
 prog="postfix"
+lockfile=/var/lock/subsys/$prog
+pidfile=/var/spool/postfix/pid/master.pid
 
 ALIASESDB_STAMP=/var/lib/misc/postfix.aliasesdb-stamp
 
 # Script to update chroot environment
 CHROOT_UPDATE=/etc/postfix/chroot-update
 
-status master >/dev/null 2>&1
+status -p $pidfile -l $(basename $lockfile) master >/dev/null 2>&1
 running=$?
 
 conf_check() {
@@ -64,6 +66,7 @@ make_aliasesdb() {
 }
 
 start() {
+	[ "$EUID" != "0" ] && exit 4
 	# Check that networking is up.
 	[ ${NETWORKING} = "no" ] && exit 1
 	conf_check
@@ -73,18 +76,19 @@ start() {
 	[ -x $CHROOT_UPDATE ] && $CHROOT_UPDATE
 	/usr/sbin/postfix start 2>/dev/null 1>&2 && success || failure $"$prog start"
 	RETVAL=$?
-	[ $RETVAL -eq 0 ] && touch /var/lock/subsys/postfix
+	[ $RETVAL -eq 0 ] && touch $lockfile
         echo
 	return $RETVAL
 }
 
 stop() {
+	[ "$EUID" != "0" ] && exit 4
 	conf_check
         # Stop daemons.
 	echo -n $"Shutting down postfix: "
 	/usr/sbin/postfix stop 2>/dev/null 1>&2 && success || failure $"$prog stop"
 	RETVAL=$?
-	[ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/postfix
+	[ $RETVAL -eq 0 ] && rm -f $lockfile $pidfile
 	echo
 	return $RETVAL
 }
@@ -145,7 +149,7 @@ case "$1" in
 	check
 	;;
   status)
-  	status master
+  	status -p $pidfile -l $(basename $lockfile) master
 	;;
   condrestart)
 	[ $running -eq 0 ] || exit 0

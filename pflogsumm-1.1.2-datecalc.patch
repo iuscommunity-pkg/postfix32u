@@ -1,0 +1,14 @@
+diff -up pflogsumm-1.1.2/pflogsumm.pl.datecalc pflogsumm-1.1.2/pflogsumm.pl
+--- pflogsumm-1.1.2/pflogsumm.pl.datecalc	2008-06-29 15:46:01.000000000 +0200
++++ pflogsumm-1.1.2/pflogsumm.pl	2010-01-29 13:53:37.000000000 +0100
+@@ -359,8 +359,8 @@ Copyright (C) 1998-2007 by James S. Seym
+ use strict;
+ use locale;
+ use Getopt::Long;
+-eval { require Date::Calc };
+-my $hasDateCalc = $@ ? 0 : 1;
++require Date::Calc;
++my $hasDateCalc = 1;
+ 
+ my $mailqCmd = "mailq";
+ my $release = "1.1.2";

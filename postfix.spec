@@ -14,7 +14,7 @@
 %endif
 
 %if %{PFLOGSUMM}
-%define pflogsumm_ver 1.1.1
+%define pflogsumm_ver 1.1.2
 %endif
 
 # Postfix requires one exlusive uid/gid and a 2nd exclusive gid for its own
@@ -40,7 +40,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.6.5
-Release: 2%{?dist}
+Release: 3%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -78,9 +78,10 @@ Patch1: postfix-2.6.1-config.patch
 Patch2: postfix-2.6.1-files.patch
 Patch3: postfix-alternatives.patch
 Patch8: postfix-large-fs.patch
+Patch9: pflogsumm-1.1.2-datecalc.patch
 
 # Optional patches - set the appropriate environment variables to include
-#                    them when building the package/spec file
+#		     them when building the package/spec file
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
@@ -161,9 +162,12 @@ qshape prints Postfix queue domain and age distribution.
 
 %if %{PFLOGSUMM}
 gzip -dc %{SOURCE53} | tar xf -
+pushd pflogsumm-%{pflogsumm_ver}
+%patch9 -p1 -b .datecalc
+popd
 %endif
 
-for f in README_FILES/TLS_{LEGACY_,}README; do
+for f in README_FILES/TLS_{LEGACY_,}README TLS_ACKNOWLEDGEMENTS; do
 	iconv -f iso8859-1 -t utf8 -o ${f}{_,} &&
 		touch -r ${f}{,_} && mv -f ${f}{_,}
 done
@@ -348,15 +352,15 @@ touch $RPM_BUILD_ROOT%{_var}/lib/misc/postfix.aliasesdb-stamp
 	readme_directory=%{postfix_readme_dir} &> /dev/null
 
 %{_sbindir}/alternatives --install %{postfix_command_dir}/sendmail mta %{postfix_command_dir}/sendmail.postfix 30 \
-        --slave %{_bindir}/mailq mta-mailq %{_bindir}/mailq.postfix \
-        --slave %{_bindir}/newaliases mta-newaliases %{_bindir}/newaliases.postfix \
-        --slave %{_sysconfdir}/pam.d/smtp mta-pam %{_sysconfdir}/pam.d/smtp.postfix \
-        --slave %{_bindir}/rmail mta-rmail %{_bindir}/rmail.postfix \
+	--slave %{_bindir}/mailq mta-mailq %{_bindir}/mailq.postfix \
+	--slave %{_bindir}/newaliases mta-newaliases %{_bindir}/newaliases.postfix \
+	--slave %{_sysconfdir}/pam.d/smtp mta-pam %{_sysconfdir}/pam.d/smtp.postfix \
+	--slave %{_bindir}/rmail mta-rmail %{_bindir}/rmail.postfix \
 	--slave /usr/lib/sendmail mta-sendmail /usr/lib/sendmail.postfix \
-        --slave %{_mandir}/man1/mailq.1.gz mta-mailqman %{_mandir}/man1/mailq.postfix.1.gz \
-        --slave %{_mandir}/man1/newaliases.1.gz mta-newaliasesman %{_mandir}/man1/newaliases.postfix.1.gz \
-        --slave %{_mandir}/man8/sendmail.8.gz mta-sendmailman %{_mandir}/man1/sendmail.postfix.1.gz \
-        --slave %{_mandir}/man5/aliases.5.gz mta-aliasesman %{_mandir}/man5/aliases.postfix.5.gz \
+	--slave %{_mandir}/man1/mailq.1.gz mta-mailqman %{_mandir}/man1/mailq.postfix.1.gz \
+	--slave %{_mandir}/man1/newaliases.1.gz mta-newaliasesman %{_mandir}/man1/newaliases.postfix.1.gz \
+	--slave %{_mandir}/man8/sendmail.8.gz mta-sendmailman %{_mandir}/man1/sendmail.postfix.1.gz \
+	--slave %{_mandir}/man5/aliases.5.gz mta-aliasesman %{_mandir}/man5/aliases.postfix.5.gz \
 	--initscript postfix
 
 %pre
@@ -495,6 +499,12 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Fri Jan 29 2010 Miroslav Lichvar <mlichvar@redhat.com> 2:2.6.5-3
+- fix init script LSB compliance (#528151)
+- update pflogsumm to 1.1.2
+- require Date::Calc for pflogsumm (#536678)
+- fix some rpmlint warnings
+
 * Wed Sep 16 2009 Tomas Mraz <tmraz@redhat.com> - 2:2.6.5-2
 - use password-auth common PAM configuration instead of system-auth
 
@@ -570,7 +580,7 @@ rm -rf $RPM_BUILD_ROOT
 - made the MYSQL and PGSQL defines overloadable as build argument
 
 * Wed Nov  7 2007 Thomas Woerner <twoerner@redhat.com> 2:2.4.5-3
-- fixed multilib conflict for makedefs.out: rename to makedefs.out-%{_arch}
+- fixed multilib conflict for makedefs.out: rename to makedefs.out-%%{_arch}
   (rhbz#342941)
 - enabled mysql support
 
