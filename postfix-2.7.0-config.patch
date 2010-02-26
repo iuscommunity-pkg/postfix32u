@@ -1,6 +1,6 @@
-diff -up postfix-2.6.1/conf/main.cf.config postfix-2.6.1/conf/main.cf
---- postfix-2.6.1/conf/main.cf.config	2007-12-18 14:50:25.000000000 +0100
-+++ postfix-2.6.1/conf/main.cf	2009-05-22 17:04:40.000000000 +0200
+diff -up postfix-2.7.0/conf/main.cf.config postfix-2.7.0/conf/main.cf
+--- postfix-2.7.0/conf/main.cf.config	2007-12-18 14:50:25.000000000 +0100
++++ postfix-2.7.0/conf/main.cf	2010-02-26 12:28:14.000000000 +0100
 @@ -113,6 +113,10 @@ mail_owner = postfix
  #inet_interfaces = all
  #inet_interfaces = $myhostname
@@ -80,24 +80,23 @@ diff -up postfix-2.6.1/conf/main.cf.config postfix-2.6.1/conf/main.cf
  #fallback_transport =
  
  # The luser_relay parameter specifies an optional destination address
-diff -up postfix-2.6.1/conf/master.cf.config postfix-2.6.1/conf/master.cf
---- postfix-2.6.1/conf/master.cf.config	2008-01-30 12:57:57.000000000 +0100
-+++ postfix-2.6.1/conf/master.cf	2009-05-22 16:38:30.000000000 +0200
-@@ -68,7 +68,7 @@ scache    unix  -       -       n       
- # The Cyrus deliver program has changed incompatibly, multiple times.
- #
- #old-cyrus unix  -       n       n       -       -       pipe
--#  flags=R user=cyrus argv=/cyrus/bin/deliver -e -m ${extension} ${user}
-+#  flags=R user=cyrus argv=/usr/lib/cyrus-imapd/deliver -e -m ${extension} ${user}
- #
- # ====================================================================
- #
-@@ -76,7 +76,7 @@ scache    unix  -       -       n       
+diff -up postfix-2.7.0/conf/master.cf.config postfix-2.7.0/conf/master.cf
+--- postfix-2.7.0/conf/master.cf.config	2010-02-03 22:01:27.000000000 +0100
++++ postfix-2.7.0/conf/master.cf	2010-02-26 12:31:55.000000000 +0100
+@@ -80,14 +80,14 @@ scache    unix  -       -       n       
  # Also specify in main.cf: cyrus_destination_recipient_limit=1
  #
  #cyrus     unix  -       n       n       -       -       pipe
 -#  user=cyrus argv=/cyrus/bin/deliver -e -r ${sender} -m ${extension} ${user}
 +#  user=cyrus argv=/usr/lib/cyrus-imapd/deliver -e -r ${sender} -m ${extension} ${user}
+ #
+ # ====================================================================
+ #
+ # Old example of delivery via Cyrus.
+ #
+ #old-cyrus unix  -       n       n       -       -       pipe
+-#  flags=R user=cyrus argv=/cyrus/bin/deliver -e -m ${extension} ${user}
++#  flags=R user=cyrus argv=/usr/lib/cyrus-imapd/deliver -e -m ${extension} ${user}
  #
  # ====================================================================
  #

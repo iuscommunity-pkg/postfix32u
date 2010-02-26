@@ -39,8 +39,8 @@
 
 Name: postfix
 Summary: Postfix Mail Transport Agent
-Version: 2.6.5
-Release: 3%{?dist}
+Version: 2.7.0
+Release: 1%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -74,7 +74,7 @@ Source101: postfix-pam.conf
 
 # Patches
 
-Patch1: postfix-2.6.1-config.patch
+Patch1: postfix-2.7.0-config.patch
 Patch2: postfix-2.6.1-files.patch
 Patch3: postfix-alternatives.patch
 Patch8: postfix-large-fs.patch
@@ -499,6 +499,9 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Fri Feb 26 2010 Miroslav Lichvar <mlichvar@redhat.com> 2:2.7.0-1
+- update to 2.7.0
+
 * Fri Jan 29 2010 Miroslav Lichvar <mlichvar@redhat.com> 2:2.6.5-3
 - fix init script LSB compliance (#528151)
 - update pflogsumm to 1.1.2
