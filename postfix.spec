@@ -1,21 +1,11 @@
-%{?!MYSQL: %define MYSQL 1}
-%{?!PGSQL: %define PGSQL 0}
-%define LDAP 2
-%define PCRE 1
-%define SASL 2
-%define TLS 1
-%define IPV6 1
-%define POSTDROP_GID 90
-%define PFLOGSUMM 1
-
-%if %{LDAP} == 1 && %{SASL} >= 2
-%undefine SASL
-%define SASL 1
-%endif
-
-%if %{PFLOGSUMM}
-%define pflogsumm_ver 1.1.2
-%endif
+%bcond_without mysql
+%bcond_with pgsql
+%bcond_without ldap
+%bcond_without pcre
+%bcond_without sasl
+%bcond_without tls
+%bcond_without ipv6
+%bcond_without pflogsumm
 
 # Postfix requires one exlusive uid/gid and a 2nd exclusive gid for its own
 # use.  Let me know if the second gid collides with another package.
@@ -24,9 +14,8 @@
 %define postfix_user	postfix
 %define postfix_gid	89
 %define postfix_group	postfix
-%define postdrop_group	postdrop
-%define maildrop_group	%{postdrop_group}
-%define maildrop_gid	%{POSTDROP_GID}
+%define maildrop_group	postdrop
+%define maildrop_gid	90
 
 %define postfix_config_dir	%{_sysconfdir}/postfix
 %define postfix_daemon_dir	%{_libexecdir}/postfix
@@ -40,7 +29,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.7.0
-Release: 1%{?dist}
+Release: 2%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -62,7 +51,9 @@ Source3: README-Postfix-SASL-RedHat.txt
 
 # Sources 50-99 are upstream [patch] contributions
 
-%if %{PFLOGSUMM}
+%define pflogsumm_ver 1.1.2
+
+%if %{with pflogsumm}
 # Postfix Log Entry Summarizer: http://jimsun.linxnet.com/postfix_contrib.html
 Source53: http://jimsun.linxnet.com/downloads/pflogsumm-%{pflogsumm_ver}.tar.gz
 %endif
@@ -88,44 +79,12 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 # Determine the different packages required for building postfix
 BuildRequires: db4-devel, pkgconfig, zlib-devel
 
-Requires: setup >= 2.5.36-1
-BuildRequires: setup >= 2.5.36-1
-
-%if %{LDAP}
-BuildRequires: openldap >= 2.0.27, openldap-devel >= 2.0.27
-Requires: openldap >= 2.0.27
-%endif
-
-%if %{SASL}
-BuildRequires: cyrus-sasl >= 2.1.10, cyrus-sasl-devel >= 2.1.10
-Requires: cyrus-sasl  >= 2.1.10
-%endif
-
-%if %{PCRE}
-Requires: pcre
-BuildRequires: pcre, pcre-devel
-%endif
-
-%if %{MYSQL}
-Requires: mysql-libs
-BuildRequires: mysql-devel
-%endif
-
-%if %{PGSQL}
-Requires: postgresql-libs
-BuildRequires: postgresql-devel
-%endif
-
-%if %{TLS}
-Requires: openssl
-BuildRequires: openssl-devel >= 0.9.6
-%endif
-
-Provides: %{_sbindir}/sendmail %{_bindir}/mailq %{_bindir}/newaliases
-Provides: %{_bindir}/rmail /usr/lib/sendmail
-Provides: %{_sysconfdir}/pam.d/smtp
-Provides: %{_mandir}/man1/mailq.1.gz %{_mandir}/man1/newaliases.1.gz
-Provides: %{_mandir}/man5/aliases.5.gz %{_mandir}/man8/sendmail.8.gz
+%{?with_ldap:BuildRequires: openldap-devel}
+%{?with_sasl:BuildRequires: cyrus-sasl-devel}
+%{?with_pcre:BuildRequires: pcre-devel}
+%{?with_mysql:BuildRequires: mysql-devel}
+%{?with_pgsql:BuildRequires: postgresql-devel}
+%{?with_tls:BuildRequires: openssl-devel}
 
 %description
 Postfix is a Mail Transport Agent (MTA), supporting LDAP, SMTP AUTH (SASL),
@@ -137,7 +96,7 @@ Group: Applications/System
 Requires: %{name} = %{epoch}:%{version}-%{release}
 # perl-scripts introduced in 2:2.5.5-2
 Obsoletes: postfix < 2:2.5.5-2
-%if %{PFLOGSUMM}
+%if %{with pflogsumm}
 Provides: postfix-pflogsumm = %{epoch}:%{version}-%{release}
 Obsoletes: postfix-pflogsumm < 2:2.5.5-2
 %endif
@@ -160,7 +119,7 @@ qshape prints Postfix queue domain and age distribution.
 %patch3 -p1 -b .alternatives
 %patch8 -p1 -b .large-fs
 
-%if %{PFLOGSUMM}
+%if %{with pflogsumm}
 gzip -dc %{SOURCE53} | tar xf -
 pushd pflogsumm-%{pflogsumm_ver}
 %patch9 -p1 -b .datecalc
@@ -180,37 +139,29 @@ AUXLIBS=
 CCARGS="${CCARGS} -fsigned-char"
 %endif
 
-%if %{LDAP}
+%if %{with ldap}
   CCARGS="${CCARGS} -DHAS_LDAP -DLDAP_DEPRECATED=1"
-  AUXLIBS="${AUXLIBS} -L%{_libdir} -lldap -llber"
+  AUXLIBS="${AUXLIBS} -lldap -llber"
 %endif
-%if %{PCRE}
+%if %{with pcre}
   # -I option required for pcre 3.4 (and later?)
-  CCARGS="${CCARGS} -DHAS_PCRE -I/usr/include/pcre"
+  CCARGS="${CCARGS} -DHAS_PCRE -I%{_includedir}/pcre"
   AUXLIBS="${AUXLIBS} -lpcre"
 %endif
-%if %{MYSQL}
-  CCARGS="${CCARGS} -DHAS_MYSQL -I/usr/include/mysql"
+%if %{with mysql}
+  CCARGS="${CCARGS} -DHAS_MYSQL -I%{_includedir}/mysql"
   AUXLIBS="${AUXLIBS} -L%{_libdir}/mysql -lmysqlclient -lm"
 %endif
-%if %{PGSQL}
-  CCARGS="${CCARGS} -DHAS_PGSQL -I/usr/include/pgsql"
+%if %{with pgsql}
+  CCARGS="${CCARGS} -DHAS_PGSQL -I%{_includedir}/pgsql"
   AUXLIBS="${AUXLIBS} -lpq"
 %endif
-%if %{SASL}
-  %define sasl_v1_lib_dir %{_libdir}/sasl
-  %define sasl_v2_lib_dir %{_libdir}/sasl2
-  CCARGS="${CCARGS} -DUSE_SASL_AUTH -DUSE_CYRUS_SASL"
-  %if %{SASL} <= 1
-    %define sasl_lib_dir %{sasl_v1_lib_dir}
-    AUXLIBS="${AUXLIBS} -L%{sasl_lib_dir} -lsasl"
-  %else
-    %define sasl_lib_dir %{sasl_v2_lib_dir}
-    CCARGS="${CCARGS} -I/usr/include/sasl"
-    AUXLIBS="${AUXLIBS} -L%{sasl_lib_dir} -lsasl2"
-  %endif
+%if %{with sasl}
+  CCARGS="${CCARGS} -DUSE_SASL_AUTH -DUSE_CYRUS_SASL -I%{_includedir}/sasl"
+  AUXLIBS="${AUXLIBS} -L%{_libdir}/sasl2 -lsasl2"
+  %global sasl_config_dir %{_sysconfdir}/sasl2
 %endif
-%if %{TLS}
+%if %{with tls}
   if pkg-config openssl ; then
     CCARGS="${CCARGS} -DUSE_TLS `pkg-config --cflags openssl`"
     AUXLIBS="${AUXLIBS} `pkg-config --libs openssl`"
@@ -219,7 +170,7 @@ CCARGS="${CCARGS} -fsigned-char"
     AUXLIBS="${AUXLIBS} -lssl -lcrypto"
   fi
 %endif
-%if %{IPV6} != 1
+%if ! %{with ipv6}
   CCARGS="${CCARGS} -DNO_IPV6"
 %endif
 
@@ -284,16 +235,10 @@ done
 sed -i -r "s#(/man[158]/.*.[158]):f#\1.gz:f#" $RPM_BUILD_ROOT%{postfix_daemon_dir}/postfix-files
 
 cat $RPM_BUILD_ROOT%{postfix_daemon_dir}/postfix-files
-%if %{SASL}
+%if %{with sasl}
 # Install the smtpd.conf file for SASL support.
-# See README-Postfix-SASL-RedHat.txt for why we need to set saslauthd_version
-# in the v1 version of smtpd.conf
-mkdir -p $RPM_BUILD_ROOT%{sasl_v1_lib_dir}
-install -m 644 %{SOURCE100} $RPM_BUILD_ROOT%{sasl_v1_lib_dir}/smtpd.conf
-echo "saslauthd_version: 2" >> $RPM_BUILD_ROOT%{sasl_v1_lib_dir}/smtpd.conf
-
-mkdir -p $RPM_BUILD_ROOT%{sasl_v2_lib_dir}
-install -m 644 %{SOURCE100} $RPM_BUILD_ROOT%{sasl_v2_lib_dir}/smtpd.conf
+mkdir -p $RPM_BUILD_ROOT%{sasl_config_dir}
+install -m 644 %{SOURCE100} $RPM_BUILD_ROOT%{sasl_config_dir}/smtpd.conf
 %endif
 
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/pam.d
@@ -314,7 +259,7 @@ rm -f $RPM_BUILD_ROOT%{postfix_config_dir}/{TLS_,}LICENSE
 find $RPM_BUILD_ROOT%{postfix_doc_dir} -type f | xargs chmod 644
 find $RPM_BUILD_ROOT%{postfix_doc_dir} -type d | xargs chmod 755
 
-%if %{PFLOGSUMM}
+%if %{with pflogsumm}
 install -c -m 644 pflogsumm-%{pflogsumm_ver}/pflogsumm-faq.txt $RPM_BUILD_ROOT%{postfix_doc_dir}/pflogsumm-faq.txt
 install -c -m 644 pflogsumm-%{pflogsumm_ver}/pflogsumm.1 $RPM_BUILD_ROOT%{_mandir}/man1/pflogsumm.1
 install -c pflogsumm-%{pflogsumm_ver}/pflogsumm.pl $RPM_BUILD_ROOT%{postfix_command_dir}/pflogsumm
@@ -336,6 +281,14 @@ popd
 
 mkdir -p $RPM_BUILD_ROOT%{_var}/lib/misc
 touch $RPM_BUILD_ROOT%{_var}/lib/misc/postfix.aliasesdb-stamp
+
+# prepare alternatives ghosts 
+for i in %{postfix_command_dir}/sendmail %{_bindir}/{mailq,newaliases,rmail} \
+	%{_sysconfdir}/pam.d/smtp /usr/lib/sendmail \
+	%{_mandir}/{man1/{mailq.1,newaliases.1},man5/aliases.5,man8/sendmail.8}
+do
+	touch $RPM_BUILD_ROOT$i
+done
 
 %post
 /sbin/chkconfig --add postfix
@@ -362,6 +315,16 @@ touch $RPM_BUILD_ROOT%{_var}/lib/misc/postfix.aliasesdb-stamp
 	--slave %{_mandir}/man8/sendmail.8.gz mta-sendmailman %{_mandir}/man1/sendmail.postfix.1.gz \
 	--slave %{_mandir}/man5/aliases.5.gz mta-aliasesman %{_mandir}/man5/aliases.postfix.5.gz \
 	--initscript postfix
+
+%if %{with sasl}
+# Move sasl config to new location
+if [ -f %{_libdir}/sasl2/smtpd.conf ]; then
+	mv -f %{_libdir}/sasl2/smtpd.conf %{sasl_config_dir}/smtpd.conf
+	/sbin/restorecon %{sasl_config_dir}/smtpd.conf 2> /dev/null
+fi
+%endif
+
+exit 0
 
 %pre
 # Add user and groups if necessary
@@ -401,9 +364,8 @@ rm -rf $RPM_BUILD_ROOT
 
 # Config files not part of upstream
 
-%if %{SASL}
-%config(noreplace) %{sasl_v1_lib_dir}/smtpd.conf
-%config(noreplace) %{sasl_v2_lib_dir}/smtpd.conf
+%if %{with sasl}
+%config(noreplace) %{sasl_config_dir}/smtpd.conf
 %endif
 %config(noreplace) %{_sysconfdir}/pam.d/smtp.postfix
 %attr(0755, root, root) %{_initrddir}/postfix
@@ -411,17 +373,11 @@ rm -rf $RPM_BUILD_ROOT
 # Documentation
 
 %{postfix_doc_dir}
-%if %{PFLOGSUMM}
+%if %{with pflogsumm}
 %exclude %{postfix_doc_dir}/pflogsumm-faq.txt
 %endif
 
 # Misc files
-
-%attr(0755, root, root) %{_bindir}/rmail.postfix
-
-%attr(0755, root, root) %{postfix_command_dir}/smtp-sink
-%attr(0755, root, root) %{postfix_command_dir}/smtp-source
-%attr(0755, root, root) /usr/lib/sendmail.postfix
 
 %dir %attr(0755, root, root) %{postfix_config_dir}
 %dir %attr(0755, root, root) %{postfix_daemon_dir}
@@ -442,13 +398,16 @@ rm -rf $RPM_BUILD_ROOT
 %dir %attr(0710, %{postfix_user}, %{maildrop_group}) %{postfix_queue_dir}/public
 %dir %attr(0700, %{postfix_user}, root) %{postfix_data_dir}
 
-%attr(0644, root, root) %{_mandir}/man1/*
-%exclude %{_mandir}/man1/qshape.1*
-%if %{PFLOGSUMM}
-%exclude %{_mandir}/man1/pflogsumm.1*
-%endif
-%attr(0644, root, root) %{_mandir}/man5/*
-%attr(0644, root, root) %{_mandir}/man8/*
+%attr(0644, root, root) %{_mandir}/man1/post*.1*
+%attr(0644, root, root) %{_mandir}/man1/smtp*.1*
+%attr(0644, root, root) %{_mandir}/man1/*.postfix.1*
+%attr(0644, root, root) %{_mandir}/man5/access.5*
+%attr(0644, root, root) %{_mandir}/man5/[b-v]*.5*
+%attr(0644, root, root) %{_mandir}/man5/*.postfix.5*
+%attr(0644, root, root) %{_mandir}/man8/*.8*
+
+%attr(0755, root, root) %{postfix_command_dir}/smtp-sink
+%attr(0755, root, root) %{postfix_command_dir}/smtp-source
 
 %attr(0755, root, root) %{postfix_command_dir}/postalias
 %attr(0755, root, root) %{postfix_command_dir}/postcat
@@ -485,20 +444,43 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755, root, root) %{postfix_daemon_dir}/proxymap
 %attr(0755, root, root) %{_bindir}/mailq.postfix
 %attr(0755, root, root) %{_bindir}/newaliases.postfix
+%attr(0755, root, root) %{_bindir}/rmail.postfix
 %attr(0755, root, root) %{_sbindir}/sendmail.postfix
+%attr(0755, root, root) /usr/lib/sendmail.postfix
+
+%ghost %{_sysconfdir}/pam.d/smtp
+
+%ghost %{_mandir}/man1/mailq.1.gz
+%ghost %{_mandir}/man1/newaliases.1.gz
+%ghost %{_mandir}/man5/aliases.5.gz
+%ghost %{_mandir}/man8/sendmail.8.gz
+
+%ghost %attr(0755, root, root) %{_bindir}/mailq
+%ghost %attr(0755, root, root) %{_bindir}/newaliases
+%ghost %attr(0755, root, root) %{_bindir}/rmail
+%ghost %attr(0755, root, root) %{_sbindir}/sendmail
+%ghost %attr(0755, root, root) /usr/lib/sendmail
+
 %ghost %attr(0644, root, root) %{_var}/lib/misc/postfix.aliasesdb-stamp
 
 %files perl-scripts
 %defattr(-, root, root)
 %attr(0755, root, root) %{postfix_command_dir}/qshape
 %attr(0644, root, root) %{_mandir}/man1/qshape*
-%if %{PFLOGSUMM}
+%if %{with pflogsumm}
 %doc %{postfix_doc_dir}/pflogsumm-faq.txt
 %attr(0644, root, root) %{_mandir}/man1/pflogsumm.1.gz
 %attr(0755, root, root) %{postfix_command_dir}/pflogsumm
 %endif
 
 %changelog
+* Wed Mar 17 2010 Miroslav Lichvar <mlichvar@redhat.com> 2:2.7.0-2
+- follow guidelines for alternatives (#570801)
+- move sasl config to /etc/sasl2 (#574434)
+- drop sasl v1 support
+- remove unnecessary requirements
+- use bcond macros
+
 * Fri Feb 26 2010 Miroslav Lichvar <mlichvar@redhat.com> 2:2.7.0-1
 - update to 2.7.0
 
