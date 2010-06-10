@@ -28,8 +28,8 @@
 
 Name: postfix
 Summary: Postfix Mail Transport Agent
-Version: 2.7.0
-Release: 2%{?dist}
+Version: 2.7.1
+Release: 1%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -51,7 +51,7 @@ Source3: README-Postfix-SASL-RedHat.txt
 
 # Sources 50-99 are upstream [patch] contributions
 
-%define pflogsumm_ver 1.1.2
+%define pflogsumm_ver 1.1.3
 
 %if %{with pflogsumm}
 # Postfix Log Entry Summarizer: http://jimsun.linxnet.com/postfix_contrib.html
@@ -69,7 +69,7 @@ Patch1: postfix-2.7.0-config.patch
 Patch2: postfix-2.6.1-files.patch
 Patch3: postfix-alternatives.patch
 Patch8: postfix-large-fs.patch
-Patch9: pflogsumm-1.1.2-datecalc.patch
+Patch9: pflogsumm-1.1.3-datecalc.patch
 
 # Optional patches - set the appropriate environment variables to include
 #		     them when building the package/spec file
@@ -404,7 +404,8 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0644, root, root) %{_mandir}/man5/access.5*
 %attr(0644, root, root) %{_mandir}/man5/[b-v]*.5*
 %attr(0644, root, root) %{_mandir}/man5/*.postfix.5*
-%attr(0644, root, root) %{_mandir}/man8/*.8*
+%attr(0644, root, root) %{_mandir}/man8/[a-qt-v]*.8*
+%attr(0644, root, root) %{_mandir}/man8/s[ch-p]*.8*
 
 %attr(0755, root, root) %{postfix_command_dir}/smtp-sink
 %attr(0755, root, root) %{postfix_command_dir}/smtp-source
@@ -474,6 +475,10 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Thu Jun 10 2010 Miroslav Lichvar <mlichvar@redhat.com> 2:2.7.1-1
+- update to 2.7.1
+- update pflogsumm to 1.1.3
+
 * Wed Mar 17 2010 Miroslav Lichvar <mlichvar@redhat.com> 2:2.7.0-2
 - follow guidelines for alternatives (#570801)
 - move sasl config to /etc/sasl2 (#574434)
