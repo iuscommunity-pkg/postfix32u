@@ -17,7 +17,7 @@
 # 23/02/01: Fix a few untidy problems with help from Daniel Roesen.
 
 ### BEGIN INIT INFO
-# Provides: postfix MTA
+# Provides: postfix $mail-transfer-agent
 # Required-Start: $local_fs $network $remote_fs
 # Required-Stop: $local_fs $network $remote_fs
 # Short-Description: start and stop postfix

@@ -28,7 +28,7 @@
 
 Name: postfix
 Summary: Postfix Mail Transport Agent
-Version: 2.7.1
+Version: 2.7.2
 Release: 1%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
@@ -475,6 +475,10 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Fri Nov 26 2010 Miroslav Lichvar <mlichvar@redhat.com> 2:2.7.2-1
+- update to 2.7.2
+- change LSB init header to provide $mail-transport-agent (#627411)
+
 * Thu Jun 10 2010 Miroslav Lichvar <mlichvar@redhat.com> 2:2.7.1-1
 - update to 2.7.1
 - update pflogsumm to 1.1.3
