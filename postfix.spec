@@ -28,7 +28,7 @@
 
 Name: postfix
 Summary: Postfix Mail Transport Agent
-Version: 2.7.2
+Version: 2.8.0
 Release: 1%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
@@ -442,6 +442,7 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755, root, root) %{postfix_daemon_dir}/postfix-script
 %attr(0755, root, root) %{postfix_daemon_dir}/postfix-wrapper
 %attr(0755, root, root) %{postfix_daemon_dir}/postmulti-script
+%attr(0755, root, root) %{postfix_daemon_dir}/postscreen
 %attr(0755, root, root) %{postfix_daemon_dir}/proxymap
 %attr(0755, root, root) %{_bindir}/mailq.postfix
 %attr(0755, root, root) %{_bindir}/newaliases.postfix
@@ -475,6 +476,9 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Wed Jan 26 2011 Miroslav Lichvar <mlichvar@redhat.com> 2:2.8.0-1
+- update to 2.8.0
+
 * Fri Nov 26 2010 Miroslav Lichvar <mlichvar@redhat.com> 2:2.7.2-1
 - update to 2.7.2
 - change LSB init header to provide $mail-transport-agent (#627411)
