@@ -29,7 +29,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.8.0
-Release: 1%{?dist}
+Release: 2%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -295,7 +295,6 @@ done
 
 # upgrade configuration files if necessary
 %{_sbindir}/postfix set-permissions upgrade-configuration \
-	config_directory=%{postfix_config_dir} \
 	daemon_directory=%{postfix_daemon_dir} \
 	command_directory=%{postfix_command_dir} \
 	mail_owner=%{postfix_user} \
@@ -476,6 +475,9 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Mon Feb 07 2011 Miroslav Lichvar <mlichvar@redhat.com> 2:2.8.0-2
+- don't set config_directory when upgrading configuration (#675654)
+
 * Wed Jan 26 2011 Miroslav Lichvar <mlichvar@redhat.com> 2:2.8.0-1
 - update to 2.8.0
 
