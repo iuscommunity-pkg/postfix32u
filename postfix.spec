@@ -29,7 +29,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.8.2
-Release: 1%{?dist}
+Release: 2%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -475,6 +475,9 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Wed Mar 23 2011 Dan Horák <dan@danny.cz> - 2:2.8.2-2
+- rebuilt for mysql 5.5.10 (soname bump in libmysqlclient)
+
 * Tue Mar 22 2011 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.8.2-1
 - update to 2.8.2
 
