@@ -28,7 +28,7 @@
 
 Name: postfix
 Summary: Postfix Mail Transport Agent
-Version: 2.8.3
+Version: 2.8.4
 Release: 1%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
@@ -475,6 +475,9 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Thu Jul 07 2011 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.8.4-1
+- update to 2.8.4
+
 * Mon May 09 2011 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.8.3-1
 - update to 2.8.3
 - fix CVE-2011-1720
