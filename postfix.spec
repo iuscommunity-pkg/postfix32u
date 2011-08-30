@@ -7,6 +7,9 @@
 %bcond_without ipv6
 %bcond_without pflogsumm
 
+# hardened build
+%global _hardened_build 1
+
 # Postfix requires one exlusive uid/gid and a 2nd exclusive gid for its own
 # use.  Let me know if the second gid collides with another package.
 # Be careful: Redhat's 'mail' user & group isn't unique!
@@ -29,7 +32,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.8.4
-Release: 2%{?dist}
+Release: 3%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -110,7 +113,7 @@ server traffic volumes, rejected and bounced email, and server
 warnings, errors and panics.
 
 qshape prints Postfix queue domain and age distribution.
- 
+
 %prep
 %setup -q
 # Apply obligatory patches
@@ -177,7 +180,7 @@ CCARGS="${CCARGS} -fsigned-char"
 CCARGS="${CCARGS} -DDEF_CONFIG_DIR=\\\"%{postfix_config_dir}\\\""
 CCARGS="${CCARGS} $(getconf LFS_CFLAGS)"
 
-AUXLIBS="${AUXLIBS} -pie -Wl,-z,relro"
+AUXLIBS="${AUXLIBS} -pie -Wl,-z,relro,-z,now"
 
 make -f Makefile.init makefiles CCARGS="${CCARGS}" AUXLIBS="${AUXLIBS}" \
   DEBUG="" OPT="$RPM_OPT_FLAGS -Wno-comment"
@@ -475,6 +478,9 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Tue Aug 30 2011 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.8.4-3
+- Hardened build, rebuilt with full relro
+
 * Tue Aug 30 2011 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.8.4-2
 - Rebuilt with libdb-5.1
   Resolves: rhbz#734084
