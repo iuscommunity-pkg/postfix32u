@@ -29,7 +29,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.8.4
-Release: 1%{?dist}
+Release: 2%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -77,7 +77,7 @@ Patch9: pflogsumm-1.1.3-datecalc.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 # Determine the different packages required for building postfix
-BuildRequires: db4-devel, pkgconfig, zlib-devel
+BuildRequires: libdb-devel, pkgconfig, zlib-devel
 
 %{?with_ldap:BuildRequires: openldap-devel}
 %{?with_sasl:BuildRequires: cyrus-sasl-devel}
@@ -475,6 +475,10 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Tue Aug 30 2011 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.8.4-2
+- Rebuilt with libdb-5.1
+  Resolves: rhbz#734084
+
 * Thu Jul 07 2011 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.8.4-1
 - update to 2.8.4
 
