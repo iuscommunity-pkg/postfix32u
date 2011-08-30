@@ -7,8 +7,8 @@
 %bcond_without ipv6
 %bcond_without pflogsumm
 
-# hardened build
-%global _hardened_build 1
+# hardened build if not overrided
+%{!?_hardened_build:%global _hardened_build 1}
 
 # Postfix requires one exlusive uid/gid and a 2nd exclusive gid for its own
 # use.  Let me know if the second gid collides with another package.
@@ -29,10 +29,14 @@
 %define postfix_sample_dir	%{postfix_doc_dir}/samples
 %define postfix_readme_dir	%{postfix_doc_dir}/README_FILES
 
+%if %{?_hardened_build:%{_hardened_build}}%{!?_hardened_build:0}
+%global harden -pie -Wl,-z,relro,-z,now
+%endif
+
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.8.4
-Release: 3%{?dist}
+Release: 4%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -180,7 +184,7 @@ CCARGS="${CCARGS} -fsigned-char"
 CCARGS="${CCARGS} -DDEF_CONFIG_DIR=\\\"%{postfix_config_dir}\\\""
 CCARGS="${CCARGS} $(getconf LFS_CFLAGS)"
 
-AUXLIBS="${AUXLIBS} -pie -Wl,-z,relro,-z,now"
+AUXLIBS="${AUXLIBS} %{?harden:%{harden}}"
 
 make -f Makefile.init makefiles CCARGS="${CCARGS}" AUXLIBS="${AUXLIBS}" \
   DEBUG="" OPT="$RPM_OPT_FLAGS -Wno-comment"
@@ -478,6 +482,9 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Tue Aug 30 2011 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.8.4-4
+- Enable override of hardened build settings
+
 * Tue Aug 30 2011 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.8.4-3
 - Hardened build, rebuilt with full relro
 
