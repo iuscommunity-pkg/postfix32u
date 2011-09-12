@@ -35,8 +35,8 @@
 
 Name: postfix
 Summary: Postfix Mail Transport Agent
-Version: 2.8.4
-Release: 4%{?dist}
+Version: 2.8.5
+Release: 1%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -482,6 +482,10 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Mon Sep 12 2011 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.8.5-1
+- Update to 2.8.5
+  Resolves: rhbz#735543
+
 * Tue Aug 30 2011 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.8.4-4
 - Enable override of hardened build settings
 
