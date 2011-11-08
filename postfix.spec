@@ -7,6 +7,8 @@
 %bcond_without ipv6
 %bcond_without pflogsumm
 
+%global sysv2systemdnvr 2.8.7-2
+
 # hardened build if not overrided
 %{!?_hardened_build:%global _hardened_build 1}
 
@@ -36,25 +38,25 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.8.7
-Release: 1%{?dist}
+Release: 2%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
 License: IBM
-Requires(post): /sbin/chkconfig
+Requires(post): systemd-units systemd-sysv 
 Requires(post): %{_sbindir}/alternatives
 Requires(pre): %{_sbindir}/groupadd
 Requires(pre): %{_sbindir}/useradd
-Requires(preun): /sbin/chkconfig
-Requires(preun): /sbin/service
 Requires(preun): %{_sbindir}/alternatives
-Requires(postun): /sbin/service
-
+Requires(preun): systemd-units
+Requires(postun): systemd-units
 Provides: MTA smtpd smtpdaemon server(smtp)
 
 Source0: ftp://ftp.porcupine.org/mirrors/postfix-release/official/%{name}-%{version}.tar.gz
 Source1: postfix-etc-init.d-postfix
+Source2: postfix.service
 Source3: README-Postfix-SASL-RedHat.txt
+Source4: postfix.aliasesdb
 
 # Sources 50-99 are upstream [patch] contributions
 
@@ -85,6 +87,7 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 # Determine the different packages required for building postfix
 BuildRequires: libdb-devel, pkgconfig, zlib-devel
+BuildRequires: systemd-units
 
 %{?with_ldap:BuildRequires: openldap-devel}
 %{?with_sasl:BuildRequires: cyrus-sasl-devel}
@@ -96,6 +99,17 @@ BuildRequires: libdb-devel, pkgconfig, zlib-devel
 %description
 Postfix is a Mail Transport Agent (MTA), supporting LDAP, SMTP AUTH (SASL),
 TLS
+
+%package sysvinit
+Summary: SysV initscript for postfix
+Group: System Environment/Daemons
+BuildArch: noarch
+Requires: %{name} = %{version}-%{release}
+Requires(preun): chkconfig
+Requires(post): chkconfig
+
+%description sysvinit
+This package contains the SysV initscript.
 
 %package perl-scripts
 Summary: Postfix utilities written in perl
@@ -224,6 +238,11 @@ sh postfix-install -non-interactive \
 mkdir -p $RPM_BUILD_ROOT%{_initrddir}
 install -c %{SOURCE1} $RPM_BUILD_ROOT%{_initrddir}/postfix
 
+# Systemd
+mkdir -p %{buildroot}%{_unitdir}
+install -m 644 %{SOURCE2} %{buildroot}%{_unitdir}
+install -m 755 %{SOURCE4} %{buildroot}%{postfix_daemon_dir}/aliasesdb
+
 install -c auxiliary/rmail/rmail $RPM_BUILD_ROOT%{_bindir}/rmail.postfix
 
 for i in active bounce corrupt defer deferred flush incoming private saved maildrop public pid saved trace; do
@@ -298,7 +317,7 @@ do
 done
 
 %post
-/sbin/chkconfig --add postfix
+[ $1 -eq 1 ] && bin/systemctl daemon-reload >/dev/null 2>&1 || :
 
 # upgrade configuration files if necessary
 %{_sbindir}/postfix set-permissions upgrade-configuration \
@@ -342,19 +361,38 @@ exit 0
 
 %preun
 if [ "$1" = 0 ]; then
-    # stop postfix silently, but only if it's running
-    /sbin/service postfix stop &>/dev/null
-    /sbin/chkconfig --del postfix
+    /bin/systemctl --no-reload disable postfix.service > /dev/null 2>&1 || :
+    /bin/systemctl stop postfix.service > /dev/null 2>&1 || :
     %{_sbindir}/alternatives --remove mta %{postfix_command_dir}/sendmail.postfix
 fi
-
 exit 0
 
 %postun
-if [ "$1" != 0 ]; then
-	/sbin/service postfix condrestart 2>&1 > /dev/null
+/bin/systemctl daemon-reload >/dev/null 2>&1 || :
+if [ "$1" -ge 1 ]; then
+    /bin/systemctl try-restart postfix.service >/dev/null 2>&1 || :
 fi
-exit 0
+
+%post sysvinit
+/sbin/chkconfig --add postfix >/dev/null 2>&1 ||:
+
+%preun sysvinit
+if [ "$1" = 0 ]; then
+    %{_initrddir}/postfix stop >/dev/null 2>&1 ||:
+    /sbin/chkconfig --del postfix >/dev/null 2>&1 ||:
+
+%postun sysvinit
+[ "$1" -ge 1 ] && %{_initrddir}/postfix condrestart >/dev/null 2>&1 ||:
+
+%triggerun -- postfix < %{sysv2systemdnvr}
+%{_bindir}/systemd-sysv-convert --save postfix >/dev/null 2>&1 ||:
+/bin/systemctl enable postfix.service >/dev/null 2>&1
+/sbin/chkconfig --del postfix >/dev/null 2>&1 || :
+/bin/systemctl try-restart postfix.service >/dev/null 2>&1 || :
+
+%triggerpostun -n postfix-sysvinit -- postfix < %{sysv2systemdnvr}
+/sbin/chkconfig --add postfix >/dev/null 2>&1 || :
+
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -366,7 +404,7 @@ rm -rf $RPM_BUILD_ROOT
 # It reads the file postfix-files which defines the ownership
 # and permissions for all files postfix installs.
 
-%defattr(-, root, root)
+%defattr(-, root, root, -)
 
 # Config files not part of upstream
 
@@ -374,7 +412,7 @@ rm -rf $RPM_BUILD_ROOT
 %config(noreplace) %{sasl_config_dir}/smtpd.conf
 %endif
 %config(noreplace) %{_sysconfdir}/pam.d/smtp.postfix
-%attr(0755, root, root) %{_initrddir}/postfix
+%{_unitdir}/postfix.service
 
 # Documentation
 
@@ -471,8 +509,12 @@ rm -rf $RPM_BUILD_ROOT
 
 %ghost %attr(0644, root, root) %{_var}/lib/misc/postfix.aliasesdb-stamp
 
+%files sysvinit
+%defattr(-, root, root, -)
+%{_initrddir}/postfix
+
 %files perl-scripts
-%defattr(-, root, root)
+%defattr(-, root, root, -)
 %attr(0755, root, root) %{postfix_command_dir}/qshape
 %attr(0644, root, root) %{_mandir}/man1/qshape*
 %if %{with pflogsumm}
@@ -482,6 +524,10 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Tue Nov  8 2011 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.8.7-2
+- Introduce systemd unit file, thanks to Jóhann B. Guðmundsson <johannbg@hi.is>
+  Resolves: rhbz#718793
+
 * Mon Nov  7 2011 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.8.7-1
 - Update to 2.8.7
   Resolves: rhbz#751622
