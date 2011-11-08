@@ -38,7 +38,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.8.7
-Release: 2%{?dist}
+Release: 3%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -380,6 +380,7 @@ fi
 if [ "$1" = 0 ]; then
     %{_initrddir}/postfix stop >/dev/null 2>&1 ||:
     /sbin/chkconfig --del postfix >/dev/null 2>&1 ||:
+fi
 
 %postun sysvinit
 [ "$1" -ge 1 ] && %{_initrddir}/postfix condrestart >/dev/null 2>&1 ||:
@@ -524,6 +525,9 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Tue Nov  8 2011 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.8.7-3
+- Fixed sysvinit preun scriptlet
+
 * Tue Nov  8 2011 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.8.7-2
 - Introduce systemd unit file, thanks to Jóhann B. Guðmundsson <johannbg@hi.is>
   Resolves: rhbz#718793
