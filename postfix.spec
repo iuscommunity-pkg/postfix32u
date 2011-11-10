@@ -38,7 +38,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.8.7
-Release: 3%{?dist}
+Release: 4%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -104,7 +104,7 @@ TLS
 Summary: SysV initscript for postfix
 Group: System Environment/Daemons
 BuildArch: noarch
-Requires: %{name} = %{version}-%{release}
+Requires: %{name} = %{epoch}:%{version}-%{release}
 Requires(preun): chkconfig
 Requires(post): chkconfig
 
@@ -525,6 +525,9 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Thu Nov 10 2011 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.8.7-4
+- Added epoch to sysvinit subpackage requires
+
 * Tue Nov  8 2011 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.8.7-3
 - Fixed sysvinit preun scriptlet
 
