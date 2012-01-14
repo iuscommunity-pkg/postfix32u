@@ -38,7 +38,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.8.7
-Release: 4%{?dist}
+Release: 5%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -525,6 +525,9 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Sat Jan 14 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2:2.8.7-5
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_17_Mass_Rebuild
+
 * Thu Nov 10 2011 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.8.7-4
 - Added epoch to sysvinit subpackage requires
 
