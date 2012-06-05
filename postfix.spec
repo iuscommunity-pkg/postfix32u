@@ -7,7 +7,7 @@
 %bcond_without ipv6
 %bcond_without pflogsumm
 
-%global sysv2systemdnvr 2.8.10-2
+%global sysv2systemdnvr 2.8.11-2
 
 # hardened build if not overrided
 %{!?_hardened_build:%global _hardened_build 1}
@@ -37,8 +37,8 @@
 
 Name: postfix
 Summary: Postfix Mail Transport Agent
-Version: 2.9.2
-Release: 2%{?dist}
+Version: 2.9.3
+Release: 1%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -525,6 +525,11 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Tue Jun  5 2012 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.9.3-1
+- New version
+  Resolves: rhbz#828242
+  Fixed sysv2systemd upgrade from f16
+
 * Wed Apr 25 2012 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.9.2-2
 - Fixed sysv2systemd upgrade from f15 / f16
 
