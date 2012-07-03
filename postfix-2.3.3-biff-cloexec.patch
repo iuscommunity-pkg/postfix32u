@@ -1,0 +1,27 @@
+diff -up postfix-2.3.3/src/local/biff_notify.c.orig2 postfix-2.3.3/src/local/biff_notify.c
+--- postfix-2.3.3/src/local/biff_notify.c.orig2	2005-07-13 22:46:18.000000000 +0200
++++ postfix-2.3.3/src/local/biff_notify.c	2012-07-02 18:17:28.694042972 +0200
+@@ -46,6 +46,7 @@
+ 
+ /* Application-specific. */
+ 
++#include "iostuff.h"
+ #include <biff_notify.h>
+ 
+ /* biff_notify - notify recipient via the biff "protocol" */
+@@ -81,9 +82,12 @@ void    biff_notify(const char *text, ss
+     /*
+      * Open a socket, or re-use an existing one.
+      */
+-    if (sock < 0 && (sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+-	msg_warn("socket: %m");
+-	return;
++    if (sock < 0) {
++	if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
++	    msg_warn("socket: %m");
++	    return;
++	}
++	close_on_exec(sock, CLOSE_ON_EXEC);
+     }
+ 
+     /*

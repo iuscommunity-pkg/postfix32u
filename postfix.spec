@@ -38,7 +38,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.9.3
-Release: 1%{?dist}
+Release: 2%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -79,6 +79,8 @@ Patch2: postfix-2.6.1-files.patch
 Patch3: postfix-alternatives.patch
 Patch8: postfix-large-fs.patch
 Patch9: pflogsumm-1.1.3-datecalc.patch
+# Fix for FD leak in biff (accepted upstream)
+Patch10: postfix-2.3.3-biff-cloexec.patch
 
 # Optional patches - set the appropriate environment variables to include
 #		     them when building the package/spec file
@@ -146,6 +148,8 @@ pushd pflogsumm-%{pflogsumm_ver}
 %patch9 -p1 -b .datecalc
 popd
 %endif
+
+%patch10 -p1 -b .biff-cloexec
 
 for f in README_FILES/TLS_{LEGACY_,}README TLS_ACKNOWLEDGEMENTS; do
 	iconv -f iso8859-1 -t utf8 -o ${f}{_,} &&
@@ -525,6 +529,9 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Tue Jul 03 2012 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.9.3-2
+- Fixed FD leak in biff
+
 * Tue Jun  5 2012 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.9.3-1
 - New version
   Resolves: rhbz#828242
