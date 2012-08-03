@@ -37,8 +37,8 @@
 
 Name: postfix
 Summary: Postfix Mail Transport Agent
-Version: 2.9.3
-Release: 3%{?dist}
+Version: 2.9.4
+Release: 1%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -79,8 +79,6 @@ Patch2: postfix-2.6.1-files.patch
 Patch3: postfix-alternatives.patch
 Patch8: postfix-large-fs.patch
 Patch9: pflogsumm-1.1.3-datecalc.patch
-# Fix for FD leak in biff (accepted upstream)
-Patch10: postfix-2.3.3-biff-cloexec.patch
 
 # Optional patches - set the appropriate environment variables to include
 #		     them when building the package/spec file
@@ -148,8 +146,6 @@ pushd pflogsumm-%{pflogsumm_ver}
 %patch9 -p1 -b .datecalc
 popd
 %endif
-
-%patch10 -p1 -b .biff-cloexec
 
 for f in README_FILES/TLS_{LEGACY_,}README TLS_ACKNOWLEDGEMENTS; do
 	iconv -f iso8859-1 -t utf8 -o ${f}{_,} &&
@@ -529,6 +525,11 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Thu Aug  2 2012 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.9.4-1
+- New version
+  Resolves: rhbz#845298
+- Dropped biff-cloexec patch (upstreamed)
+
 * Sat Jul 21 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2:2.9.3-3
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_18_Mass_Rebuild
 
