@@ -38,7 +38,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.9.4
-Release: 2%{?dist}
+Release: 3%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -57,6 +57,7 @@ Source1: postfix-etc-init.d-postfix
 Source2: postfix.service
 Source3: README-Postfix-SASL-RedHat.txt
 Source4: postfix.aliasesdb
+Source5: postfix-chroot-update
 
 # Sources 50-99 are upstream [patch] contributions
 
@@ -242,6 +243,7 @@ install -c %{SOURCE1} $RPM_BUILD_ROOT%{_initrddir}/postfix
 mkdir -p %{buildroot}%{_unitdir}
 install -m 644 %{SOURCE2} %{buildroot}%{_unitdir}
 install -m 755 %{SOURCE4} %{buildroot}%{postfix_daemon_dir}/aliasesdb
+install -m 755 %{SOURCE5} %{buildroot}%{postfix_daemon_dir}/chroot-update
 
 install -c auxiliary/rmail/rmail $RPM_BUILD_ROOT%{_bindir}/rmail.postfix
 
@@ -525,6 +527,9 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Thu Sep  6 2012 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.9.4-3
+- Fixed systemd error message about missing chroot-update
+
 * Fri Aug  3 2012 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.9.4-2
 - Fixed sysv2systemd upgrade from f16
 
