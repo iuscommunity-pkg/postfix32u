@@ -529,6 +529,7 @@ rm -rf $RPM_BUILD_ROOT
 %changelog
 * Thu Sep  6 2012 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.9.4-3
 - Fixed systemd error message about missing chroot-update
+  Resolves: rhbz#832742
 
 * Fri Aug  3 2012 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.9.4-2
 - Fixed sysv2systemd upgrade from f16
