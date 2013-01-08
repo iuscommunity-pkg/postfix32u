@@ -38,7 +38,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.9.5
-Release: 1%{?dist}
+Release: 2%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -202,7 +202,7 @@ CCARGS="${CCARGS} $(getconf LFS_CFLAGS)"
 AUXLIBS="${AUXLIBS} %{?harden:%{harden}}"
 
 make -f Makefile.init makefiles CCARGS="${CCARGS}" AUXLIBS="${AUXLIBS}" \
-  DEBUG="" OPT="$RPM_OPT_FLAGS -Wno-comment"
+  DEBUG="" OPT="$RPM_OPT_FLAGS -fno-strict-aliasing -Wno-comment"
 
 make %{?_smp_mflags} 
 
@@ -527,6 +527,9 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Tue Jan  8 2013 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.9.5-2
+- Rebuilt with -fno-strict-aliasing
+
 * Thu Dec 13 2012 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.9.5-1
 - New version
   Resolves: rhbz#886804
