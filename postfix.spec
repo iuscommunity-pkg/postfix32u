@@ -37,8 +37,8 @@
 
 Name: postfix
 Summary: Postfix Mail Transport Agent
-Version: 2.9.5
-Release: 2%{?dist}
+Version: 2.9.6
+Release: 1%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -527,6 +527,10 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Tue Feb  5 2013 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.9.6-1
+- New version
+  Resolves: rhbz#907803
+
 * Tue Jan  8 2013 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.9.5-2
 - Rebuilt with -fno-strict-aliasing
 
