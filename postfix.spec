@@ -9,6 +9,8 @@
 
 %global sysv2systemdnvr 2.8.12-2
 
+%global prerelease -RC1
+
 # hardened build if not overrided
 %{!?_hardened_build:%global _hardened_build 1}
 
@@ -37,8 +39,8 @@
 
 Name: postfix
 Summary: Postfix Mail Transport Agent
-Version: 2.9.6
-Release: 1%{?dist}
+Version: 2.10.0
+Release: 0.1.rc1%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -52,7 +54,7 @@ Requires(preun): systemd-units
 Requires(postun): systemd-units
 Provides: MTA smtpd smtpdaemon server(smtp)
 
-Source0: ftp://ftp.porcupine.org/mirrors/postfix-release/official/%{name}-%{version}.tar.gz
+Source0: ftp://ftp.porcupine.org/mirrors/postfix-release/official/%{name}-%{version}%{?prerelease}.tar.gz
 Source1: postfix-etc-init.d-postfix
 Source2: postfix.service
 Source3: README-Postfix-SASL-RedHat.txt
@@ -134,7 +136,7 @@ warnings, errors and panics.
 qshape prints Postfix queue domain and age distribution.
 
 %prep
-%setup -q
+%setup -q -n %{name}-%{version}%{?prerelease}
 # Apply obligatory patches
 %patch1 -p1 -b .config
 %patch2 -p1 -b .files
@@ -527,6 +529,9 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Fri Feb  8 2013 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.10.0-0.1.rc1
+- New version
+
 * Tue Feb  5 2013 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.9.6-1
 - New version
   Resolves: rhbz#907803
