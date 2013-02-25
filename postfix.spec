@@ -40,18 +40,18 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.10.0
-Release: 0.1.rc1%{?dist}
+Release: 0.2.rc1%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
 License: IBM
-Requires(post): systemd-units systemd-sysv 
+Requires(post): systemd
 Requires(post): %{_sbindir}/alternatives
 Requires(pre): %{_sbindir}/groupadd
 Requires(pre): %{_sbindir}/useradd
 Requires(preun): %{_sbindir}/alternatives
-Requires(preun): systemd-units
-Requires(postun): systemd-units
+Requires(preun): systemd
+Requires(postun): systemd
 Provides: MTA smtpd smtpdaemon server(smtp)
 
 Source0: ftp://ftp.porcupine.org/mirrors/postfix-release/official/%{name}-%{version}%{?prerelease}.tar.gz
@@ -321,7 +321,7 @@ do
 done
 
 %post
-[ $1 -eq 1 ] && bin/systemctl daemon-reload >/dev/null 2>&1 || :
+%systemd_post %{name}.service
 
 # upgrade configuration files if necessary
 %{_sbindir}/postfix set-permissions upgrade-configuration \
@@ -364,18 +364,15 @@ exit 0
 exit 0
 
 %preun
+%systemd_preun %{name}.service
+
 if [ "$1" = 0 ]; then
-    /bin/systemctl --no-reload disable postfix.service > /dev/null 2>&1 || :
-    /bin/systemctl stop postfix.service > /dev/null 2>&1 || :
     %{_sbindir}/alternatives --remove mta %{postfix_command_dir}/sendmail.postfix
 fi
 exit 0
 
 %postun
-/bin/systemctl daemon-reload >/dev/null 2>&1 || :
-if [ "$1" -ge 1 ]; then
-    /bin/systemctl try-restart postfix.service >/dev/null 2>&1 || :
-fi
+%systemd_postun_with_restart %{name}.service
 
 %post sysvinit
 /sbin/chkconfig --add postfix >/dev/null 2>&1 ||:
@@ -529,6 +526,10 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Mon Feb 25 2013 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.10.0-0.2.rc1
+- Switched to systemd-rpm macros
+  Resolves: rhbz#850276
+
 * Fri Feb  8 2013 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.10.0-0.1.rc1
 - New version
 
