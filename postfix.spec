@@ -40,12 +40,12 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.10.0
-Release: 0.2.rc1%{?dist}
+Release: 0.3.rc1%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
 License: IBM
-Requires(post): systemd
+Requires(post): systemd systemd-sysv
 Requires(post): %{_sbindir}/alternatives
 Requires(pre): %{_sbindir}/groupadd
 Requires(pre): %{_sbindir}/useradd
@@ -526,6 +526,9 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Tue Feb 26 2013 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.10.0-0.3.rc1
+- Added systemd-sysv to requires
+
 * Mon Feb 25 2013 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.10.0-0.2.rc1
 - Switched to systemd-rpm macros
   Resolves: rhbz#850276
