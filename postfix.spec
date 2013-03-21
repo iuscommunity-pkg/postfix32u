@@ -9,8 +9,6 @@
 
 %global sysv2systemdnvr 2.8.12-2
 
-%global prerelease -RC1
-
 # hardened build if not overrided
 %{!?_hardened_build:%global _hardened_build 1}
 
@@ -40,7 +38,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.10.0
-Release: 0.3.rc1%{?dist}
+Release: 1%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -54,7 +52,7 @@ Requires(preun): systemd
 Requires(postun): systemd
 Provides: MTA smtpd smtpdaemon server(smtp)
 
-Source0: ftp://ftp.porcupine.org/mirrors/postfix-release/official/%{name}-%{version}%{?prerelease}.tar.gz
+Source0: ftp://ftp.porcupine.org/mirrors/postfix-release/official/%{name}-%{version}.tar.gz
 Source1: postfix-etc-init.d-postfix
 Source2: postfix.service
 Source3: README-Postfix-SASL-RedHat.txt
@@ -77,7 +75,7 @@ Source101: postfix-pam.conf
 
 # Patches
 
-Patch1: postfix-2.7.0-config.patch
+Patch1: postfix-2.10.0-config.patch
 Patch2: postfix-2.6.1-files.patch
 Patch3: postfix-alternatives.patch
 Patch8: postfix-large-fs.patch
@@ -136,7 +134,7 @@ warnings, errors and panics.
 qshape prints Postfix queue domain and age distribution.
 
 %prep
-%setup -q -n %{name}-%{version}%{?prerelease}
+%setup -q
 # Apply obligatory patches
 %patch1 -p1 -b .config
 %patch2 -p1 -b .files
@@ -526,6 +524,11 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Thu Mar 21 2013 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.10.0-1
+- New version
+- Re-enabled IPv6 in the config
+  Resolves: rhbz#863140
+
 * Tue Feb 26 2013 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.10.0-0.3.rc1
 - Added systemd-sysv to requires
 
