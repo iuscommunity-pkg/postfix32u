@@ -37,8 +37,8 @@
 
 Name: postfix
 Summary: Postfix Mail Transport Agent
-Version: 2.10.0
-Release: 2%{?dist}
+Version: 2.10.1
+Release: 1%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -524,6 +524,10 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Mon Jun 24 2013 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.10.1-1
+- New version
+  Resolves: rhbz#977273
+
 * Thu May 23 2013 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.10.0-2
 - Fixed systemd error message regarding chroot-update, patch provided
   by John Heidemann <johnh@isi.edu>
