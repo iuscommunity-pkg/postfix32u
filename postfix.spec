@@ -38,7 +38,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.10.1
-Release: 1%{?dist}
+Release: 2%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -50,6 +50,8 @@ Requires(pre): %{_sbindir}/useradd
 Requires(preun): %{_sbindir}/alternatives
 Requires(preun): systemd
 Requires(postun): systemd
+# Required by /usr/libexec/postfix/postfix-script
+Requires: diffutils
 Provides: MTA smtpd smtpdaemon server(smtp)
 
 Source0: ftp://ftp.porcupine.org/mirrors/postfix-release/official/%{name}-%{version}.tar.gz
@@ -524,6 +526,10 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Thu Jul  4 2013 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.10.1-2
+- Added diffutils as explicit requirement
+  Resolves: rhbz#830540
+
 * Mon Jun 24 2013 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.10.1-1
 - New version
   Resolves: rhbz#977273
