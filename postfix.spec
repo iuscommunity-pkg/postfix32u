@@ -38,7 +38,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.10.1
-Release: 2%{?dist}
+Release: 3%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -526,6 +526,9 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Wed Jul 17 2013 Petr Pisar <ppisar@redhat.com> - 2:2.10.1-3
+- Perl 5.18 rebuild
+
 * Thu Jul  4 2013 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.10.1-2
 - Added diffutils as explicit requirement
   Resolves: rhbz#830540
