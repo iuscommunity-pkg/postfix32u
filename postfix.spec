@@ -27,7 +27,7 @@
 %define postfix_command_dir	%{_sbindir}
 %define postfix_queue_dir	%{_var}/spool/postfix
 %define postfix_data_dir	%{_var}/lib/postfix
-%define postfix_doc_dir		%{_docdir}/%{name}-%{version}
+%define postfix_doc_dir		%{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}}
 %define postfix_sample_dir	%{postfix_doc_dir}/samples
 %define postfix_readme_dir	%{postfix_doc_dir}/README_FILES
 
@@ -38,7 +38,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.10.1
-Release: 3%{?dist}
+Release: 4%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -526,6 +526,9 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Fri Jul 26 2013 Ville Skyttä <ville.skytta@iki.fi> - 2:2.10.1-4
+- Install docs to %%{_pkgdocdir} where available.
+
 * Wed Jul 17 2013 Petr Pisar <ppisar@redhat.com> - 2:2.10.1-3
 - Perl 5.18 rebuild
 
