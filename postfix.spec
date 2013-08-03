@@ -38,7 +38,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.10.1
-Release: 4%{?dist}
+Release: 5%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -526,6 +526,9 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Sat Aug 03 2013 Petr Pisar <ppisar@redhat.com> - 2:2.10.1-5
+- Perl 5.18 rebuild
+
 * Fri Jul 26 2013 Ville Skyttä <ville.skytta@iki.fi> - 2:2.10.1-4
 - Install docs to %%{_pkgdocdir} where available.
 
