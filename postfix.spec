@@ -38,11 +38,11 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.10.1
-Release: 5%{?dist}
+Release: 6%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
-License: IBM
+License: IBM and GPLv2+
 Requires(post): systemd systemd-sysv
 Requires(post): %{_sbindir}/alternatives
 Requires(pre): %{_sbindir}/groupadd
@@ -526,6 +526,9 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Tue Aug  6 2013 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.10.1-6
+- Fixed license (pflogsumm)
+
 * Sat Aug 03 2013 Petr Pisar <ppisar@redhat.com> - 2:2.10.1-5
 - Perl 5.18 rebuild
 
