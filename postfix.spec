@@ -38,7 +38,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.10.1
-Release: 6%{?dist}
+Release: 7%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -201,7 +201,7 @@ CCARGS="${CCARGS} -fsigned-char"
 CCARGS="${CCARGS} -DDEF_CONFIG_DIR=\\\"%{postfix_config_dir}\\\""
 CCARGS="${CCARGS} $(getconf LFS_CFLAGS)"
 
-AUXLIBS="${AUXLIBS} %{?harden:%{harden}}"
+AUXLIBS="${AUXLIBS} %{?harden}"
 
 make -f Makefile.init makefiles CCARGS="${CCARGS}" AUXLIBS="${AUXLIBS}" \
   DEBUG="" OPT="$RPM_OPT_FLAGS -fno-strict-aliasing -Wno-comment"
@@ -526,6 +526,9 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Mon Aug 12 2013 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.10.1-7
+- Minor changes to macros regarding hardened build
+
 * Tue Aug  6 2013 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.10.1-6
 - Fixed license (pflogsumm)
 
