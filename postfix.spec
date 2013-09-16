@@ -37,8 +37,8 @@
 
 Name: postfix
 Summary: Postfix Mail Transport Agent
-Version: 2.10.1
-Release: 7%{?dist}
+Version: 2.10.2
+Release: 1%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -78,7 +78,7 @@ Source101: postfix-pam.conf
 # Patches
 
 Patch1: postfix-2.10.0-config.patch
-Patch2: postfix-2.6.1-files.patch
+Patch2: postfix-2.10.2-files.patch
 Patch3: postfix-alternatives.patch
 Patch8: postfix-large-fs.patch
 Patch9: pflogsumm-1.1.3-datecalc.patch
@@ -526,6 +526,11 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Mon Sep 16 2013 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.10.2-1
+- New version
+  Resolves: rhbz#1006005
+- Defuzzified patches
+
 * Mon Aug 12 2013 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.10.1-7
 - Minor changes to macros regarding hardened build
 

@@ -1,7 +1,8 @@
-diff -up postfix-2.6.1/conf/postfix-files.files postfix-2.6.1/conf/postfix-files
---- postfix-2.6.1/conf/postfix-files.files	2009-02-14 03:08:16.000000000 +0100
-+++ postfix-2.6.1/conf/postfix-files	2009-05-26 11:29:57.000000000 +0200
-@@ -111,20 +111,14 @@ $command_directory/postqueue:f:root:$set
+diff --git a/conf/postfix-files b/conf/postfix-files
+index 90ef957..6bced7f 100644
+--- a/conf/postfix-files
++++ b/conf/postfix-files
+@@ -114,20 +114,14 @@ $command_directory/postqueue:f:root:$setgid_group:2755:u
  $sendmail_path:f:root:-:755
  $newaliases_path:l:$sendmail_path
  $mailq_path:l:$sendmail_path
@@ -22,7 +23,7 @@ diff -up postfix-2.6.1/conf/postfix-files.files postfix-2.6.1/conf/postfix-files
  $config_directory/master.cf:f:root:-:644:p
  $config_directory/pcre_table:f:root:-:644:o
  $config_directory/postfix-files:f:root:-:644:o
-@@ -137,8 +131,8 @@ $config_directory/postfix-script:f:root:
+@@ -140,8 +134,8 @@ $config_directory/postfix-script:f:root:-:755:o
  $config_directory/postfix-script-sgid:f:root:-:755:o
  $config_directory/postfix-script-nosgid:f:root:-:755:o
  $config_directory/post-install:f:root:-:755:o
@@ -33,7 +34,7 @@ diff -up postfix-2.6.1/conf/postfix-files.files postfix-2.6.1/conf/postfix-files
  $manpage_directory/man1/postalias.1:f:root:-:644
  $manpage_directory/man1/postcat.1:f:root:-:644
  $manpage_directory/man1/postconf.1:f:root:-:644
-@@ -151,9 +145,9 @@ $manpage_directory/man1/postmap.1:f:root
+@@ -154,9 +148,9 @@ $manpage_directory/man1/postmap.1:f:root:-:644
  $manpage_directory/man1/postmulti.1:f:root:-:644
  $manpage_directory/man1/postqueue.1:f:root:-:644
  $manpage_directory/man1/postsuper.1:f:root:-:644
