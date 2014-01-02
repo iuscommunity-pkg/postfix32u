@@ -38,7 +38,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.10.2
-Release: 2%{?dist}
+Release: 3%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -526,6 +526,9 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Thu Jan  2 2014 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.10.2-3
+- Rebuilt regarding ECDHE
+
 * Wed Oct 23 2013 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.10.2-2
 - Rebuilt against ECDHE enabled openssl
   Resolves: rhbz#1019254
