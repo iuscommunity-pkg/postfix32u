@@ -531,6 +531,7 @@ rm -rf $RPM_BUILD_ROOT
   Resolves: rhbz#1054116
 - Updated / de-fuzzified patches
 - Compiled with USE_LDAP_SASL if both "ldap" and "sasl" options are enabled.
+  Patch provided by Davide Principi <davide.principi@nethesis.it>
   Resolves: rhbz#1052958
 
 * Thu Jan  2 2014 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.10.2-3
