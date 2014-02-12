@@ -21,10 +21,10 @@ index 50a4aa7..beef3db 100644
      if (msg_verbose)
  	msg_info("%s: %s: block size %lu, blocks free %lu",
 diff --git a/src/util/sys_defs.h b/src/util/sys_defs.h
-index 00cbdc2..361eac1 100644
+index 6edde1e..b30871e 100644
 --- a/src/util/sys_defs.h
 +++ b/src/util/sys_defs.h
-@@ -761,8 +761,8 @@ extern int initgroups(const char *, int);
+@@ -776,8 +776,8 @@ extern int initgroups(const char *, int);
  #define GETTIMEOFDAY(t)	gettimeofday(t,(struct timezone *) 0)
  #define ROOT_PATH	"/bin:/usr/bin:/sbin:/usr/sbin"
  #define FIONREAD_IN_TERMIOS_H

@@ -37,8 +37,8 @@
 
 Name: postfix
 Summary: Postfix Mail Transport Agent
-Version: 2.10.2
-Release: 3%{?dist}
+Version: 2.11.0
+Release: 1%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -77,7 +77,7 @@ Source101: postfix-pam.conf
 
 # Patches
 
-Patch1: postfix-2.10.0-config.patch
+Patch1: postfix-2.11.0-config.patch
 Patch2: postfix-2.10.2-files.patch
 Patch3: postfix-alternatives.patch
 Patch8: postfix-large-fs.patch
@@ -164,7 +164,7 @@ CCARGS="${CCARGS} -fsigned-char"
 %endif
 
 %if %{with ldap}
-  CCARGS="${CCARGS} -DHAS_LDAP -DLDAP_DEPRECATED=1"
+  CCARGS="${CCARGS} -DHAS_LDAP -DLDAP_DEPRECATED=1 %{?with_sasl:-DUSE_LDAP_SASL}"
   AUXLIBS="${AUXLIBS} -lldap -llber"
 %endif
 %if %{with pcre}
@@ -526,6 +526,13 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Wed Feb 12 2014 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.11.0-1
+- New version
+  Resolves: rhbz#1054116
+- Updated / de-fuzzified patches
+- Compiled with USE_LDAP_SASL if both "ldap" and "sasl" options are enabled.
+  Resolves: rhbz#1052958
+
 * Thu Jan  2 2014 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.10.2-3
 - Rebuilt regarding ECDHE
 

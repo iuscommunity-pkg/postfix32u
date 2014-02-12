@@ -1,16 +1,13 @@
-Changing the postfix-files config file won't work right on upgrades because
-it's a noreplace configuration (the new version with the right paths in it is
-installed as postfix-files.rpmnew), so we just munge the post-install script.
 diff --git a/conf/post-install b/conf/post-install
-index 91ff4a6..f78d820 100644
+index 7e79c92..081b015 100644
 --- a/conf/post-install
 +++ b/conf/post-install
-@@ -480,6 +480,16 @@ test -n "$create" && {
- 	case $path in
- 	no|no/*) continue;;
- 	esac
-+	# Munge paths for alternatives.
-+	case $path in
+@@ -491,6 +491,16 @@ test -n "$create" && {
+ 	    case $path in
+ 	    no|no/*) continue;;
+ 	    esac
++	    # Munge paths for alternatives.
++	    case $path in
 +		/usr/bin/mailq) path=$path.postfix ;;
 +		/usr/bin/newaliases) path=$path.postfix ;;
 +		/usr/bin/rmail) path=$path.postfix ;;
@@ -18,7 +15,7 @@ index 91ff4a6..f78d820 100644
 +		/usr/share/man/man1/mailq.1.gz) path=/usr/share/man/man1/mailq.postfix.1.gz ;;
 +		/usr/share/man/man1/newaliases.1.gz) path=/usr/share/man/man1/newaliases.postfix.1.gz ;;
 +		/usr/share/man/man5/aliases.5.gz) path=/usr/share/man/man5/aliases.postfix.5.gz ;;
-+	esac
- 	# Pick up the flags.
- 	case $flags in *u*) upgrade_flag=1;; *) upgrade_flag=;; esac
- 	case $flags in *c*) create_flag=1;; *) create_flag=;; esac
++	    esac
+ 	    # Pick up the flags.
+ 	    case $flags in *u*) upgrade_flag=1;; *) upgrade_flag=;; esac
+ 	    case $flags in *c*) create_flag=1;; *) create_flag=;; esac

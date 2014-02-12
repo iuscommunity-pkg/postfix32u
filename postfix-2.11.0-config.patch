@@ -1,5 +1,5 @@
 diff --git a/conf/main.cf b/conf/main.cf
-index 8d301aa..57e865f 100644
+index dc58a1d..e0fcc91 100644
 --- a/conf/main.cf
 +++ b/conf/main.cf
 @@ -113,6 +113,10 @@ mail_owner = postfix
@@ -65,7 +65,7 @@ index 8d301aa..57e865f 100644
 +# can be used to take advantage of the single instance message store
 +# capability of Cyrus. The concurrency limit can be used to control
 +# how many simultaneous LMTP sessions will be permitted to the Cyrus
-+# message store. 
++# message store.
  #
  # Cyrus IMAP via command line. Uncomment the "cyrus...pipe" and
  # subsequent line in master.cf.
@@ -85,10 +85,10 @@ index 8d301aa..57e865f 100644
  readme_directory =
 -inet_protocols = ipv4
 diff --git a/conf/master.cf b/conf/master.cf
-index acc67d7..bc15d38 100644
+index 51a3398..721b61c 100644
 --- a/conf/master.cf
 +++ b/conf/master.cf
-@@ -92,14 +92,14 @@ scache    unix  -       -       n       -       1       scache
+@@ -95,14 +95,14 @@ scache    unix  -       -       n       -       1       scache
  # Also specify in main.cf: cyrus_destination_recipient_limit=1
  #
  #cyrus     unix  -       n       n       -       -       pipe
