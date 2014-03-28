@@ -38,7 +38,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 2.11.0
-Release: 1%{?dist}
+Release: 2%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -215,7 +215,7 @@ mkdir -p $RPM_BUILD_ROOT
 # install postfix into $RPM_BUILD_ROOT
 
 # Move stuff around so we don't conflict with sendmail
-for i in man1/mailq.1 man1/newaliases.1 man1/sendmail.1 man5/aliases.5; do
+for i in man1/mailq.1 man1/newaliases.1 man1/sendmail.1 man5/aliases.5 man8/smtpd.8; do
   dest=$(echo $i | sed 's|\.[1-9]$|.postfix\0|')
   mv man/$i man/$dest
   sed -i "s|^\.so $i|\.so $dest|" man/man?/*.[1-9]
@@ -315,7 +315,7 @@ touch $RPM_BUILD_ROOT%{_var}/lib/misc/postfix.aliasesdb-stamp
 # prepare alternatives ghosts 
 for i in %{postfix_command_dir}/sendmail %{_bindir}/{mailq,newaliases,rmail} \
 	%{_sysconfdir}/pam.d/smtp /usr/lib/sendmail \
-	%{_mandir}/{man1/{mailq.1,newaliases.1},man5/aliases.5,man8/sendmail.8}
+	%{_mandir}/{man1/{mailq.1,newaliases.1},man5/aliases.5,man8/{sendmail.8,smtpd.8}}
 do
 	touch $RPM_BUILD_ROOT$i
 done
@@ -343,6 +343,7 @@ done
 	--slave %{_mandir}/man1/newaliases.1.gz mta-newaliasesman %{_mandir}/man1/newaliases.postfix.1.gz \
 	--slave %{_mandir}/man8/sendmail.8.gz mta-sendmailman %{_mandir}/man1/sendmail.postfix.1.gz \
 	--slave %{_mandir}/man5/aliases.5.gz mta-aliasesman %{_mandir}/man5/aliases.postfix.5.gz \
+	--slave %{_mandir}/man8/smtpd.8.gz mta-smtpdman %{_mandir}/man8/smtpd.postfix.8.gz \
 	--initscript postfix
 
 %if %{with sasl}
@@ -361,6 +362,13 @@ exit 0
 %{_sbindir}/groupadd -g %{postfix_gid} -r %{postfix_group} 2>/dev/null
 %{_sbindir}/groupadd -g 12 -r mail 2>/dev/null
 %{_sbindir}/useradd -d %{postfix_queue_dir} -s /sbin/nologin -g %{postfix_group} -G mail -M -r -u %{postfix_uid} %{postfix_user} 2>/dev/null
+
+# hack, to turn man8/smtpd.8.gz into alternatives symlink (part of the rhbz#1051180 fix)
+# this could be probably dropped in f23+
+if [ -e %{_mandir}/man8/smtpd.8.gz ]; then
+	[ -h %{_mandir}/man8/smtpd.8.gz ] || rm -f %{_mandir}/man8/smtpd.8.gz
+fi
+
 exit 0
 
 %preun
@@ -451,7 +459,9 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0644, root, root) %{_mandir}/man5/[b-v]*.5*
 %attr(0644, root, root) %{_mandir}/man5/*.postfix.5*
 %attr(0644, root, root) %{_mandir}/man8/[a-qt-v]*.8*
-%attr(0644, root, root) %{_mandir}/man8/s[ch-p]*.8*
+%attr(0644, root, root) %{_mandir}/man8/s[ch-lnp]*.8*
+%attr(0644, root, root) %{_mandir}/man8/smtp.8*
+%attr(0644, root, root) %{_mandir}/man8/smtpd.postfix.8*
 
 %attr(0755, root, root) %{postfix_command_dir}/smtp-sink
 %attr(0755, root, root) %{postfix_command_dir}/smtp-source
@@ -490,11 +500,11 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755, root, root) %{postfix_daemon_dir}/postmulti-script
 %attr(0755, root, root) %{postfix_daemon_dir}/postscreen
 %attr(0755, root, root) %{postfix_daemon_dir}/proxymap
-%attr(0755, root, root) %{_bindir}/mailq.postfix
-%attr(0755, root, root) %{_bindir}/newaliases.postfix
+%{_bindir}/mailq.postfix
+%{_bindir}/newaliases.postfix
 %attr(0755, root, root) %{_bindir}/rmail.postfix
 %attr(0755, root, root) %{_sbindir}/sendmail.postfix
-%attr(0755, root, root) /usr/lib/sendmail.postfix
+/usr/lib/sendmail.postfix
 
 %ghost %{_sysconfdir}/pam.d/smtp
 
@@ -502,6 +512,7 @@ rm -rf $RPM_BUILD_ROOT
 %ghost %{_mandir}/man1/newaliases.1.gz
 %ghost %{_mandir}/man5/aliases.5.gz
 %ghost %{_mandir}/man8/sendmail.8.gz
+%ghost %{_mandir}/man8/smtpd.8.gz
 
 %ghost %attr(0755, root, root) %{_bindir}/mailq
 %ghost %attr(0755, root, root) %{_bindir}/newaliases
@@ -526,6 +537,10 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Fri Mar 28 2014 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.11.0-2
+- Added man8/smtpd.8.gz to alternatives
+  Resolves: rhbz#1051180
+
 * Wed Feb 12 2014 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.11.0-1
 - New version
   Resolves: rhbz#1054116
