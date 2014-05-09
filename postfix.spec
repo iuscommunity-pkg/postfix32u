@@ -37,8 +37,8 @@
 
 Name: postfix
 Summary: Postfix Mail Transport Agent
-Version: 2.11.0
-Release: 2%{?dist}
+Version: 2.11.1
+Release: 1%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -537,6 +537,10 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Fri May  9 2014 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.11.1-1
+- New version
+  Resolves: rhbz#1095655
+
 * Fri Mar 28 2014 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.11.0-2
 - Added man8/smtpd.8.gz to alternatives
   Resolves: rhbz#1051180
