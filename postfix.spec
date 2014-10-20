@@ -37,7 +37,7 @@
 
 Name: postfix
 Summary: Postfix Mail Transport Agent
-Version: 2.11.2
+Version: 2.11.3
 Release: 1%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
@@ -537,6 +537,10 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Mon Oct 20 2014 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.11.3-1
+- New version
+  Resolves: rhbz#1154587
+
 * Tue Oct 14 2014 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.11.2-1
 - New version
   Resolves: rhbz#1152488
