@@ -37,7 +37,7 @@
 
 Name: postfix
 Summary: Postfix Mail Transport Agent
-Version: 2.11.3
+Version: 3.0.0
 Release: 1%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
@@ -77,10 +77,10 @@ Source101: postfix-pam.conf
 
 # Patches
 
-Patch1: postfix-2.11.0-config.patch
-Patch2: postfix-2.10.2-files.patch
-Patch3: postfix-alternatives.patch
-Patch8: postfix-large-fs.patch
+Patch1: postfix-3.0.0-config.patch
+Patch2: postfix-3.0.0-files.patch
+Patch3: postfix-3.0.0-alternatives.patch
+Patch8: postfix-3.0.0-large-fs.patch
 Patch9: pflogsumm-1.1.3-datecalc.patch
 
 # Optional patches - set the appropriate environment variables to include
@@ -262,9 +262,9 @@ done
 ## RPM compresses man pages automatically.
 ## - Edit postfix-files to reflect this, so post-install won't get confused
 ##   when called during package installation.
-sed -i -r "s#(/man[158]/.*.[158]):f#\1.gz:f#" $RPM_BUILD_ROOT%{postfix_daemon_dir}/postfix-files
+sed -i -r "s#(/man[158]/.*.[158]):f#\1.gz:f#" $RPM_BUILD_ROOT%{postfix_config_dir}/postfix-files
 
-cat $RPM_BUILD_ROOT%{postfix_daemon_dir}/postfix-files
+cat $RPM_BUILD_ROOT%{postfix_config_dir}/postfix-files
 %if %{with sasl}
 # Install the smtpd.conf file for SASL support.
 mkdir -p $RPM_BUILD_ROOT%{sasl_config_dir}
@@ -483,18 +483,18 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0644, root, root) %config(noreplace) %{postfix_config_dir}/generic
 %attr(0644, root, root) %config(noreplace) %{postfix_config_dir}/header_checks
 %attr(0644, root, root) %config(noreplace) %{postfix_config_dir}/main.cf
+%attr(0644, root, root) %config(noreplace) %{postfix_config_dir}/main.cf.proto
 %attr(0644, root, root) %config(noreplace) %{postfix_config_dir}/master.cf
+%attr(0644, root, root) %config(noreplace) %{postfix_config_dir}/master.cf.proto
 %attr(0644, root, root) %config(noreplace) %{postfix_config_dir}/relocated
 %attr(0644, root, root) %config(noreplace) %{postfix_config_dir}/transport
 %attr(0644, root, root) %config(noreplace) %{postfix_config_dir}/virtual
 %attr(0755, root, root) %{postfix_daemon_dir}/[^mp]*
-%attr(0644, root, root) %{postfix_daemon_dir}/main.cf
-%attr(0644, root, root) %{postfix_daemon_dir}/master.cf
 %attr(0755, root, root) %{postfix_daemon_dir}/master
 %attr(0755, root, root) %{postfix_daemon_dir}/pickup
 %attr(0755, root, root) %{postfix_daemon_dir}/pipe
 %attr(0755, root, root) %{postfix_daemon_dir}/post-install
-%attr(0644, root, root) %{postfix_daemon_dir}/postfix-files
+%attr(0644, root, root) %{postfix_config_dir}/postfix-files
 %attr(0755, root, root) %{postfix_daemon_dir}/postfix-script
 %attr(0755, root, root) %{postfix_daemon_dir}/postfix-wrapper
 %attr(0755, root, root) %{postfix_daemon_dir}/postmulti-script
@@ -537,6 +537,12 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Thu Mar  5 2015 Jaroslav Škarvada <jskarvad@redhat.com> - 2:3.0.0-1
+- New version
+  Resolves: rhbz#1190797
+- Defuzzified alternatives, config, large-fs patches
+- Rebased files patch
+
 * Mon Oct 20 2014 Jaroslav Škarvada <jskarvad@redhat.com> - 2:2.11.3-1
 - New version
   Resolves: rhbz#1154587
