@@ -38,7 +38,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 3.0.0
-Release: 1%{?dist}
+Release: 2%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -103,6 +103,7 @@ BuildRequires: systemd-units
 Postfix is a Mail Transport Agent (MTA), supporting LDAP, SMTP AUTH (SASL),
 TLS
 
+%if 0%{?fedora} < 23
 %package sysvinit
 Summary: SysV initscript for postfix
 Group: System Environment/Daemons
@@ -113,6 +114,7 @@ Requires(post): chkconfig
 
 %description sysvinit
 This package contains the SysV initscript.
+%endif
 
 %package perl-scripts
 Summary: Postfix utilities written in perl
@@ -237,9 +239,11 @@ sh postfix-install -non-interactive \
        sample_directory=%{postfix_sample_dir} \
        readme_directory=%{postfix_readme_dir} || exit 1
 
+%if 0%{fedora} < 23
 # This installs into the /etc/rc.d/init.d directory
 mkdir -p $RPM_BUILD_ROOT%{_initrddir}
 install -c %{SOURCE1} $RPM_BUILD_ROOT%{_initrddir}/postfix
+%endif
 
 # Systemd
 mkdir -p %{buildroot}%{_unitdir}
@@ -382,6 +386,7 @@ exit 0
 %postun
 %systemd_postun_with_restart %{name}.service
 
+%if 0%{fedora} < 23
 %post sysvinit
 /sbin/chkconfig --add postfix >/dev/null 2>&1 ||:
 
@@ -394,14 +399,16 @@ fi
 %postun sysvinit
 [ "$1" -ge 1 ] && %{_initrddir}/postfix condrestart >/dev/null 2>&1 ||:
 
+%triggerpostun -n postfix-sysvinit -- postfix < %{sysv2systemdnvr}
+/sbin/chkconfig --add postfix >/dev/null 2>&1 || :
+%endif
+
 %triggerun -- postfix < %{sysv2systemdnvr}
 %{_bindir}/systemd-sysv-convert --save postfix >/dev/null 2>&1 ||:
 %{_bindir}/systemd-sysv-convert --apply postfix >/dev/null 2>&1 ||:
 /sbin/chkconfig --del postfix >/dev/null 2>&1 || :
 /bin/systemctl try-restart postfix.service >/dev/null 2>&1 || :
 
-%triggerpostun -n postfix-sysvinit -- postfix < %{sysv2systemdnvr}
-/sbin/chkconfig --add postfix >/dev/null 2>&1 || :
 
 
 %clean
@@ -522,9 +529,11 @@ rm -rf $RPM_BUILD_ROOT
 
 %ghost %attr(0644, root, root) %{_var}/lib/misc/postfix.aliasesdb-stamp
 
+%if 0%{?fedora} < 23
 %files sysvinit
 %defattr(-, root, root, -)
 %{_initrddir}/postfix
+%endif
 
 %files perl-scripts
 %defattr(-, root, root, -)
@@ -537,6 +546,9 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Tue Mar 10 2015 Adam Jackson <ajax@redhat.com> 2:3.0.0-2
+- Drop sysvinit subpackage in F23+
+
 * Thu Mar  5 2015 Jaroslav Škarvada <jskarvad@redhat.com> - 2:3.0.0-1
 - New version
   Resolves: rhbz#1190797
