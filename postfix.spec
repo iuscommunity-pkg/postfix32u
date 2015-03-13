@@ -38,7 +38,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 3.0.0
-Release: 2%{?dist}
+Release: 3%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -90,7 +90,7 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 # Determine the different packages required for building postfix
 BuildRequires: libdb-devel, pkgconfig, zlib-devel
-BuildRequires: systemd-units
+BuildRequires: systemd-units, libicu-devel
 
 %{?with_ldap:BuildRequires: openldap-devel}
 %{?with_sasl:BuildRequires: cyrus-sasl-devel}
@@ -546,6 +546,9 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Fri Mar 13 2015 Jaroslav Škarvada <jskarvad@redhat.com> - 2:3.0.0-3
+- Rebuilt with libicu for SMTPUTF8
+
 * Tue Mar 10 2015 Adam Jackson <ajax@redhat.com> 2:3.0.0-2
 - Drop sysvinit subpackage in F23+
 
