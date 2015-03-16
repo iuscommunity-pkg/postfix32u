@@ -1,5 +1,7 @@
 %bcond_without mysql
-%bcond_with pgsql
+%bcond_without pgsql
+%bcond_without sqlite
+%bcond_without cdb
 %bcond_without ldap
 %bcond_without pcre
 %bcond_without sasl
@@ -24,6 +26,7 @@
 
 %define postfix_config_dir	%{_sysconfdir}/postfix
 %define postfix_daemon_dir	%{_libexecdir}/postfix
+%define postfix_shlib_dir	%{_libdir}/postfix
 %define postfix_command_dir	%{_sbindir}
 %define postfix_queue_dir	%{_var}/spool/postfix
 %define postfix_data_dir	%{_var}/lib/postfix
@@ -31,14 +34,15 @@
 %define postfix_sample_dir	%{postfix_doc_dir}/samples
 %define postfix_readme_dir	%{postfix_doc_dir}/README_FILES
 
-%if %{?_hardened_build:%{_hardened_build}}%{!?_hardened_build:0}
-%global harden -pie -Wl,-z,relro,-z,now
-%endif
+# Filter private libraries
+%global _privatelibs libpostfix-.+\.so.*
+%global __provides_exclude ^(%{_privatelibs})$
+%global __requires_exclude ^(%{_privatelibs})$
 
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 3.0.0
-Release: 3%{?dist}
+Release: 4%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -84,7 +88,7 @@ Patch8: postfix-3.0.0-large-fs.patch
 Patch9: pflogsumm-1.1.3-datecalc.patch
 
 # Optional patches - set the appropriate environment variables to include
-#		     them when building the package/spec file
+#                    them when building the package/spec file
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
@@ -97,11 +101,12 @@ BuildRequires: systemd-units, libicu-devel
 %{?with_pcre:BuildRequires: pcre-devel}
 %{?with_mysql:BuildRequires: mysql-devel}
 %{?with_pgsql:BuildRequires: postgresql-devel}
+%{?with_sqlite:BuildRequires: sqlite-devel}
+%{?with_cdb:BuildRequires: tinycdb-devel}
 %{?with_tls:BuildRequires: openssl-devel}
 
 %description
-Postfix is a Mail Transport Agent (MTA), supporting LDAP, SMTP AUTH (SASL),
-TLS
+Postfix is a Mail Transport Agent (MTA).
 
 %if 0%{?fedora} < 23
 %package sysvinit
@@ -137,6 +142,66 @@ warnings, errors and panics.
 
 qshape prints Postfix queue domain and age distribution.
 
+%if %{with mysql}
+%package mysql
+Summary: Postfix MySQL map support
+Requires: %{name} = %{epoch}:%{version}-%{release}
+
+%description mysql
+This provides support for MySQL maps in Postfix. If you plan to use MySQL
+maps with Postfix, you need this.
+%endif
+
+%if %{with pgsql}
+%package pgsql
+Summary: Postfix PostgreSQL map support
+Requires: %{name} = %{epoch}:%{version}-%{release}
+
+%description pgsql
+This provides support for PostgreSQL  maps in Postfix. If you plan to use
+PostgreSQL maps with Postfix, you need this.
+%endif
+
+%if %{with sqlite}
+%package sqlite
+Summary: Postfix SQLite map support
+Requires: %{name} = %{epoch}:%{version}-%{release}
+
+%description sqlite
+This provides support for SQLite maps in Postfix. If you plan to use SQLite
+maps with Postfix, you need this.
+%endif
+
+%if %{with cdb}
+%package cdb
+Summary: Postfix CDB map support
+Requires: %{name} = %{epoch}:%{version}-%{release}
+
+%description cdb
+This provides support for CDB maps in Postfix. If you plan to use CDB
+maps with Postfix, you need this.
+%endif
+
+%if %{with ldap}
+%package ldap
+Summary: Postfix LDAP map support
+Requires: %{name} = %{epoch}:%{version}-%{release}
+
+%description ldap
+This provides support for LDAP maps in Postfix. If you plan to use LDAP
+maps with Postfix, you need this.
+%endif
+
+%if %{with pcre}
+%package pcre
+Summary: Postfix PCRE map support
+Requires: %{name} = %{epoch}:%{version}-%{release}
+
+%description pcre
+This provides support for PCRE maps in Postfix. If you plan to use PCRE
+maps with Postfix, you need this.
+%endif
+
 %prep
 %setup -q
 # Apply obligatory patches
@@ -159,7 +224,7 @@ done
 
 %build
 CCARGS=-fPIC
-AUXLIBS=
+unset AUXLIBS AUXLIBS_LDAP AUXLIBS_PCRE AUXLIBS_MYSQL AUXLIBS_PGSQL AUXLIBS_SQLITE AUXLIBS_CDB
 
 %ifarch s390 s390x ppc
 CCARGS="${CCARGS} -fsigned-char"
@@ -167,20 +232,28 @@ CCARGS="${CCARGS} -fsigned-char"
 
 %if %{with ldap}
   CCARGS="${CCARGS} -DHAS_LDAP -DLDAP_DEPRECATED=1 %{?with_sasl:-DUSE_LDAP_SASL}"
-  AUXLIBS="${AUXLIBS} -lldap -llber"
+  AUXLIBS_LDAP="-lldap -llber"
 %endif
 %if %{with pcre}
   # -I option required for pcre 3.4 (and later?)
   CCARGS="${CCARGS} -DHAS_PCRE -I%{_includedir}/pcre"
-  AUXLIBS="${AUXLIBS} -lpcre"
+  AUXLIBS_PCRE="-lpcre"
 %endif
 %if %{with mysql}
   CCARGS="${CCARGS} -DHAS_MYSQL -I%{_includedir}/mysql"
-  AUXLIBS="${AUXLIBS} -L%{_libdir}/mysql -lmysqlclient -lm"
+  AUXLIBS_MYSQL="-L%{_libdir}/mysql -lmysqlclient -lm"
 %endif
 %if %{with pgsql}
   CCARGS="${CCARGS} -DHAS_PGSQL -I%{_includedir}/pgsql"
-  AUXLIBS="${AUXLIBS} -lpq"
+  AUXLIBS_PGSQL="-lpq"
+%endif
+%if %{with sqlite}
+  CCARGS="${CCARGS} -DHAS_SQLITE `pkg-config --cflags sqlite3`"
+  AUXLIBS_SQLITE="`pkg-config --libs sqlite3`"
+%endif
+%if %{with cdb}
+  CCARGS="${CCARGS} -DHAS_CDB `pkg-config --cflags libcdb`"
+  AUXLIBS_CDB="`pkg-config --libs libcdb`"
 %endif
 %if %{with sasl}
   CCARGS="${CCARGS} -DUSE_SASL_AUTH -DUSE_CYRUS_SASL -I%{_includedir}/sasl"
@@ -203,10 +276,15 @@ CCARGS="${CCARGS} -fsigned-char"
 CCARGS="${CCARGS} -DDEF_CONFIG_DIR=\\\"%{postfix_config_dir}\\\""
 CCARGS="${CCARGS} $(getconf LFS_CFLAGS)"
 
-AUXLIBS="${AUXLIBS} %{?harden}"
+LDFLAGS="%{?__global_ldflags} %{?_hardened_build:-Wl,-z,relro,-z,now}"
 
-make -f Makefile.init makefiles CCARGS="${CCARGS}" AUXLIBS="${AUXLIBS}" \
-  DEBUG="" OPT="$RPM_OPT_FLAGS -fno-strict-aliasing -Wno-comment"
+make -f Makefile.init makefiles shared=yes dynamicmaps=yes \
+  %{?_hardened_build:pie=yes} CCARGS="${CCARGS}" AUXLIBS="${AUXLIBS}" \
+  AUXLIBS_LDAP="${AUXLIBS_LDAP}" AUXLIBS_PCRE="${AUXLIBS_PCRE}" \
+  AUXLIBS_MYSQL="${AUXLIBS_MYSQL}" AUXLIBS_PGSQL="${AUXLIBS_PGSQL}" \
+  AUXLIBS_SQLITE="${AUXLIBS_SQLITE}" AUXLIBS_CDB="${AUXLIBS_CDB}"\
+  DEBUG="" SHLIB_RPATH="-Wl,-rpath,%{postfix_shlib_dir} $LDFLAGS" \
+  OPT="$RPM_OPT_FLAGS -fno-strict-aliasing -Wno-comment"
 
 make %{?_smp_mflags} 
 
@@ -223,9 +301,11 @@ for i in man1/mailq.1 man1/newaliases.1 man1/sendmail.1 man5/aliases.5 man8/smtp
   sed -i "s|^\.so $i|\.so $dest|" man/man?/*.[1-9]
 done
 
-sh postfix-install -non-interactive \
+make non-interactive-package \
        install_root=$RPM_BUILD_ROOT \
        config_directory=%{postfix_config_dir} \
+       meta_directory=%{postfix_config_dir} \
+       shlib_directory=%{postfix_shlib_dir} \
        daemon_directory=%{postfix_daemon_dir} \
        command_directory=%{postfix_command_dir} \
        queue_directory=%{postfix_queue_dir} \
@@ -323,6 +403,28 @@ for i in %{postfix_command_dir}/sendmail %{_bindir}/{mailq,newaliases,rmail} \
 do
 	touch $RPM_BUILD_ROOT$i
 done
+
+# helper for splitting content of dynamicmaps.cf and postfix-files
+function split_file
+{
+# "|| :" to silently skip non existent records
+  grep "$1" "$3" >> "$3.d/$2" || :
+  sed -i "\|$1| d" "$3" || :
+}
+
+# split global dynamic maps configuration to individual sub-packages
+pushd $RPM_BUILD_ROOT%{postfix_config_dir}
+for map in %{?with_mysql:mysql} %{?with_pgsql:pgsql} %{?with_sqlite:sqlite} \
+%{?with_cdb:cdb} %{?with_ldap:ldap} %{?with_pcre:pcre}; do
+  rm -f dynamicmaps.cf.d/"$map" "postfix-files.d/$map"
+  split_file "^\s*$map\b" "$map" dynamicmaps.cf
+  sed -i "s|postfix-$map\\.so|%{postfix_shlib_dir}/\\0|" "dynamicmaps.cf.d/$map"
+  split_file "^\$shlib_directory/postfix-$map\\.so:" "$map" postfix-files
+  split_file "^\$manpage_directory/man5/${map}_table\\.5" "$map" postfix-files
+  map_upper=`echo $map | tr '[:lower:]' '[:upper:]'`
+  split_file "^\$readme_directory/${map_upper}_README:" "$map" postfix-files
+done
+popd
 
 %post
 %systemd_post %{name}.service
@@ -438,6 +540,19 @@ rm -rf $RPM_BUILD_ROOT
 %exclude %{postfix_doc_dir}/pflogsumm-faq.txt
 %endif
 
+# Exclude due to dynamic maps subpackages
+%exclude %{_mandir}/man5/mysql_table.5*
+%exclude %{postfix_doc_dir}/README_FILES/MYSQL_README
+%exclude %{_mandir}/man5/pgsql_table.5*
+%exclude %{postfix_doc_dir}/README_FILES/PGSQL_README
+%exclude %{_mandir}/man5/sqlite_table.5*
+%exclude %{postfix_doc_dir}/README_FILES/SQLITE_README
+%exclude %{postfix_doc_dir}/README_FILES/CDB_README
+%exclude %{_mandir}/man5/ldap_table.5*
+%exclude %{postfix_doc_dir}/README_FILES/LDAP_README
+%exclude %{_mandir}/man5/pcre_table.5*
+%exclude %{postfix_doc_dir}/README_FILES/PCRE_README
+
 # Misc files
 
 %dir %attr(0755, root, root) %{postfix_config_dir}
@@ -458,6 +573,8 @@ rm -rf $RPM_BUILD_ROOT
 %dir %attr(0700, %{postfix_user}, root) %{postfix_queue_dir}/private
 %dir %attr(0710, %{postfix_user}, %{maildrop_group}) %{postfix_queue_dir}/public
 %dir %attr(0700, %{postfix_user}, root) %{postfix_data_dir}
+%dir %attr(0755, root, root) %{postfix_config_dir}/dynamicmaps.cf.d
+%dir %attr(0755, root, root) %{postfix_config_dir}/postfix-files.d
 
 %attr(0644, root, root) %{_mandir}/man1/post*.1*
 %attr(0644, root, root) %{_mandir}/man1/smtp*.1*
@@ -496,6 +613,7 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0644, root, root) %config(noreplace) %{postfix_config_dir}/relocated
 %attr(0644, root, root) %config(noreplace) %{postfix_config_dir}/transport
 %attr(0644, root, root) %config(noreplace) %{postfix_config_dir}/virtual
+%attr(0644, root, root) %{postfix_config_dir}/dynamicmaps.cf
 %attr(0755, root, root) %{postfix_daemon_dir}/[^mp]*
 %attr(0755, root, root) %{postfix_daemon_dir}/master
 %attr(0755, root, root) %{postfix_daemon_dir}/pickup
@@ -507,6 +625,7 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755, root, root) %{postfix_daemon_dir}/postmulti-script
 %attr(0755, root, root) %{postfix_daemon_dir}/postscreen
 %attr(0755, root, root) %{postfix_daemon_dir}/proxymap
+%attr(0755, root, root) %{postfix_shlib_dir}/libpostfix-*.so
 %{_bindir}/mailq.postfix
 %{_bindir}/newaliases.postfix
 %attr(0755, root, root) %{_bindir}/rmail.postfix
@@ -545,7 +664,67 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755, root, root) %{postfix_command_dir}/pflogsumm
 %endif
 
+%if %{with mysql}
+%files mysql
+%attr(0644, root, root) %{postfix_config_dir}/dynamicmaps.cf.d/mysql
+%attr(0644, root, root) %{postfix_config_dir}/postfix-files.d/mysql
+%attr(0755, root, root) %{postfix_shlib_dir}/postfix-mysql.so
+%attr(0644, root, root) %{_mandir}/man5/mysql_table.5*
+%attr(0644, root, root) %{postfix_doc_dir}/README_FILES/MYSQL_README
+
+%endif
+
+%if %{with pgsql}
+%files pgsql
+%attr(0644, root, root) %{postfix_config_dir}/dynamicmaps.cf.d/pgsql
+%attr(0644, root, root) %{postfix_config_dir}/postfix-files.d/pgsql
+%attr(0755, root, root) %{postfix_shlib_dir}/postfix-pgsql.so
+%attr(0644, root, root) %{_mandir}/man5/pgsql_table.5*
+%attr(0644, root, root) %{postfix_doc_dir}/README_FILES/PGSQL_README
+%endif
+
+%if %{with sqlite}
+%files sqlite
+%attr(0644, root, root) %{postfix_config_dir}/dynamicmaps.cf.d/sqlite
+%attr(0644, root, root) %{postfix_config_dir}/postfix-files.d/sqlite
+%attr(0755, root, root) %{postfix_shlib_dir}/postfix-sqlite.so
+%attr(0644, root, root) %{_mandir}/man5/sqlite_table.5*
+%attr(0644, root, root) %{postfix_doc_dir}/README_FILES/SQLITE_README
+%endif
+
+%if %{with cdb}
+%files cdb
+%attr(0644, root, root) %{postfix_config_dir}/dynamicmaps.cf.d/cdb
+%attr(0644, root, root) %{postfix_config_dir}/postfix-files.d/cdb
+%attr(0755, root, root) %{postfix_shlib_dir}/postfix-cdb.so
+%attr(0644, root, root) %{postfix_doc_dir}/README_FILES/CDB_README
+%endif
+
+%if %{with ldap}
+%files ldap
+%attr(0644, root, root) %{postfix_config_dir}/dynamicmaps.cf.d/ldap
+%attr(0644, root, root) %{postfix_config_dir}/postfix-files.d/ldap
+%attr(0755, root, root) %{postfix_shlib_dir}/postfix-ldap.so
+%attr(0644, root, root) %{_mandir}/man5/ldap_table.5*
+%attr(0644, root, root) %{postfix_doc_dir}/README_FILES/LDAP_README
+%endif
+
+%if %{with pcre}
+%files pcre
+%attr(0644, root, root) %{postfix_config_dir}/dynamicmaps.cf.d/pcre
+%attr(0644, root, root) %{postfix_config_dir}/postfix-files.d/pcre
+%attr(0755, root, root) %{postfix_shlib_dir}/postfix-pcre.so
+%attr(0644, root, root) %{_mandir}/man5/pcre_table.5*
+%attr(0644, root, root) %{postfix_doc_dir}/README_FILES/PCRE_README
+%endif
+
 %changelog
+* Fri Mar 13 2015 Jaroslav Škarvada <jskarvad@redhat.com> - 2:3.0.0-4
+- Switched to dynamically loaded libraries and database plugins
+- Enabled PostgreSQL support by default
+- Added SQLite support
+- Added CDB support
+
 * Fri Mar 13 2015 Jaroslav Škarvada <jskarvad@redhat.com> - 2:3.0.0-3
 - Rebuilt with libicu for SMTPUTF8
 
