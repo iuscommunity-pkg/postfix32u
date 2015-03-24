@@ -42,7 +42,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 3.0.0
-Release: 4%{?dist}
+Release: 5%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -210,6 +210,11 @@ maps with Postfix, you need this.
 %patch3 -p1 -b .alternatives
 %patch8 -p1 -b .large-fs
 
+# Change DEF_SHLIB_DIR according to build host
+sed -i \
+'s|^\(\s*#define\s\+DEF_SHLIB_DIR\s\+\)"/usr/lib/postfix"|\1"%{_libdir}/postfix"|' \
+src/global/mail_params.h
+
 %if %{with pflogsumm}
 gzip -dc %{SOURCE53} | tar xf -
 pushd pflogsumm-%{pflogsumm_ver}
@@ -278,6 +283,10 @@ CCARGS="${CCARGS} $(getconf LFS_CFLAGS)"
 
 LDFLAGS="%{?__global_ldflags} %{?_hardened_build:-Wl,-z,relro,-z,now}"
 
+# SHLIB_RPATH is needed to find private libraries
+# LDFLAGS are added to SHLIB_RPATH because the postfix build system
+# ignores them. Adding LDFLAGS to SHLIB_RPATH is currently the only
+# way how to get them in
 make -f Makefile.init makefiles shared=yes dynamicmaps=yes \
   %{?_hardened_build:pie=yes} CCARGS="${CCARGS}" AUXLIBS="${AUXLIBS}" \
   AUXLIBS_LDAP="${AUXLIBS_LDAP}" AUXLIBS_PCRE="${AUXLIBS_PCRE}" \
@@ -719,6 +728,10 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Tue Mar 24 2015 Jaroslav Škarvada <jskarvad@redhat.com> - 2:3.0.0-5
+- Overriden DEF_SHLIB_DIR according to build host
+  Resolves: rhbz#1202921
+
 * Fri Mar 13 2015 Jaroslav Škarvada <jskarvad@redhat.com> - 2:3.0.0-4
 - Switched to dynamically loaded libraries and database plugins
 - Enabled PostgreSQL support by default
