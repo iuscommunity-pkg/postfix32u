@@ -41,8 +41,8 @@
 
 Name: postfix
 Summary: Postfix Mail Transport Agent
-Version: 3.0.0
-Release: 5%{?dist}
+Version: 3.0.1
+Release: 1%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -728,6 +728,9 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Mon Apr 13 2015 Jaroslav Škarvada <jskarvad@redhat.com> - 2:3.0.1-1
+- New version
+
 * Tue Mar 24 2015 Jaroslav Škarvada <jskarvad@redhat.com> - 2:3.0.0-5
 - Overriden DEF_SHLIB_DIR according to build host
   Resolves: rhbz#1202921
