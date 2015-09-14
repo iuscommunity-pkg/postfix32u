@@ -42,7 +42,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 3.0.2
-Release: 1%{?dist}
+Release: 2%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -332,7 +332,7 @@ make non-interactive-package \
        sample_directory=%{postfix_sample_dir} \
        readme_directory=%{postfix_readme_dir} || exit 1
 
-%if 0%{fedora} < 23
+%if 0%{?fedora} < 23
 # This installs into the /etc/rc.d/init.d directory
 mkdir -p $RPM_BUILD_ROOT%{_initrddir}
 install -c %{SOURCE1} $RPM_BUILD_ROOT%{_initrddir}/postfix
@@ -501,7 +501,7 @@ exit 0
 %postun
 %systemd_postun_with_restart %{name}.service
 
-%if 0%{fedora} < 23
+%if 0%{?fedora} < 23
 %post sysvinit
 /sbin/chkconfig --add postfix >/dev/null 2>&1 ||:
 
@@ -732,6 +732,9 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Mon Sep 14 2015 Jaroslav Škarvada <jskarvad@redhat.com> - 2:3.0.2-2
+- Fixed sysvinit conditionals
+
 * Wed Jul 22 2015 Jaroslav Škarvada <jskarvad@redhat.com> - 2:3.0.2-1
 - New version
   Resolves: rhbz#1245183
