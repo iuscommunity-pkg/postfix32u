@@ -41,8 +41,8 @@
 
 Name: postfix
 Summary: Postfix Mail Transport Agent
-Version: 3.0.2
-Release: 2%{?dist}
+Version: 3.0.3
+Release: 1%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -85,9 +85,6 @@ Patch1: postfix-3.0.0-config.patch
 Patch2: postfix-3.0.0-files.patch
 Patch3: postfix-3.0.2-alternatives.patch
 Patch4: postfix-3.0.0-large-fs.patch
-# The patch below resets the global errno variable to 0 before calling
-# readdir(). This seems to fix bug rhbz#1204139
-Patch5: postfix-3.0.1-reset-errno-before-readdir.patch
 Patch9: pflogsumm-1.1.3-datecalc.patch
 
 # Optional patches - set the appropriate environment variables to include
@@ -212,7 +209,6 @@ maps with Postfix, you need this.
 %patch2 -p1 -b .files
 %patch3 -p1 -b .alternatives
 %patch4 -p1 -b .large-fs
-%patch5 -p1 -b .reset-errno-before-readdir
 
 # Change DEF_SHLIB_DIR according to build host
 sed -i \
@@ -732,6 +728,11 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Mon Oct 12 2015 Jaroslav Škarvada <jskarvad@redhat.com> - 2:3.0.3-1
+- New version
+  Resolves: rhbz#1270577
+- Dropped reset-errno-before-readdir patch (upstreamed)
+
 * Mon Sep 14 2015 Jaroslav Škarvada <jskarvad@redhat.com> - 2:3.0.2-2
 - Fixed sysvinit conditionals
 
