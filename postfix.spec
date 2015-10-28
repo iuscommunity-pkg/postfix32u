@@ -42,7 +42,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 3.0.3
-Release: 1%{?dist}
+Release: 2%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -728,6 +728,9 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Wed Oct 28 2015 David Tardon <dtardon@redhat.com> - 2:3.0.3-2
+- rebuild for ICU 56.1
+
 * Mon Oct 12 2015 Jaroslav Škarvada <jskarvad@redhat.com> - 2:3.0.3-1
 - New version
   Resolves: rhbz#1270577
