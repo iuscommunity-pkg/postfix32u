@@ -42,7 +42,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 3.0.3
-Release: 2%{?dist}
+Release: 3%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -435,7 +435,7 @@ for map in %{?with_mysql:mysql} %{?with_pgsql:pgsql} %{?with_sqlite:sqlite} \
 done
 popd
 
-%post
+%post -e
 %systemd_post %{name}.service
 
 # upgrade configuration files if necessary
@@ -448,17 +448,20 @@ popd
 	sample_directory=%{postfix_sample_dir} \
 	readme_directory=%{postfix_readme_dir} &> /dev/null
 
+ALTERNATIVES_DOCS=""
+[ "%%{_excludedocs}" = 1 ] || ALTERNATIVES_DOCS='--slave %{_mandir}/man1/mailq.1.gz mta-mailqman %{_mandir}/man1/mailq.postfix.1.gz
+	--slave %{_mandir}/man1/newaliases.1.gz mta-newaliasesman %{_mandir}/man1/newaliases.postfix.1.gz
+	--slave %{_mandir}/man8/sendmail.8.gz mta-sendmailman %{_mandir}/man1/sendmail.postfix.1.gz
+	--slave %{_mandir}/man5/aliases.5.gz mta-aliasesman %{_mandir}/man5/aliases.postfix.5.gz
+	--slave %{_mandir}/man8/smtpd.8.gz mta-smtpdman %{_mandir}/man8/smtpd.postfix.8.gz'
+
 %{_sbindir}/alternatives --install %{postfix_command_dir}/sendmail mta %{postfix_command_dir}/sendmail.postfix 30 \
 	--slave %{_bindir}/mailq mta-mailq %{_bindir}/mailq.postfix \
 	--slave %{_bindir}/newaliases mta-newaliases %{_bindir}/newaliases.postfix \
 	--slave %{_sysconfdir}/pam.d/smtp mta-pam %{_sysconfdir}/pam.d/smtp.postfix \
 	--slave %{_bindir}/rmail mta-rmail %{_bindir}/rmail.postfix \
 	--slave /usr/lib/sendmail mta-sendmail /usr/lib/sendmail.postfix \
-	--slave %{_mandir}/man1/mailq.1.gz mta-mailqman %{_mandir}/man1/mailq.postfix.1.gz \
-	--slave %{_mandir}/man1/newaliases.1.gz mta-newaliasesman %{_mandir}/man1/newaliases.postfix.1.gz \
-	--slave %{_mandir}/man8/sendmail.8.gz mta-sendmailman %{_mandir}/man1/sendmail.postfix.1.gz \
-	--slave %{_mandir}/man5/aliases.5.gz mta-aliasesman %{_mandir}/man5/aliases.postfix.5.gz \
-	--slave %{_mandir}/man8/smtpd.8.gz mta-smtpdman %{_mandir}/man8/smtpd.postfix.8.gz \
+	$ALTERNATIVES_DOCS \
 	--initscript postfix
 
 %if %{with sasl}
@@ -728,6 +731,10 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Mon Jan 11 2016 Jaroslav Škarvada <jskarvad@redhat.com> - 2:3.0.3-3
+- Added support for installation with _excludedocs
+  Resolves: rhbz#1227824
+
 * Wed Oct 28 2015 David Tardon <dtardon@redhat.com> - 2:3.0.3-2
 - rebuild for ICU 56.1
 
