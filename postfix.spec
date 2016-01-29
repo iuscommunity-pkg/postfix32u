@@ -42,7 +42,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 3.0.3
-Release: 3%{?dist}
+Release: 4%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -455,7 +455,7 @@ ALTERNATIVES_DOCS=""
 	--slave %{_mandir}/man5/aliases.5.gz mta-aliasesman %{_mandir}/man5/aliases.postfix.5.gz
 	--slave %{_mandir}/man8/smtpd.8.gz mta-smtpdman %{_mandir}/man8/smtpd.postfix.8.gz'
 
-%{_sbindir}/alternatives --install %{postfix_command_dir}/sendmail mta %{postfix_command_dir}/sendmail.postfix 30 \
+%{_sbindir}/alternatives --install %{postfix_command_dir}/sendmail mta %{postfix_command_dir}/sendmail.postfix 60 \
 	--slave %{_bindir}/mailq mta-mailq %{_bindir}/mailq.postfix \
 	--slave %{_bindir}/newaliases mta-newaliases %{_bindir}/newaliases.postfix \
 	--slave %{_sysconfdir}/pam.d/smtp mta-pam %{_sysconfdir}/pam.d/smtp.postfix \
@@ -731,6 +731,11 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Fri Jan 29 2016 Jaroslav Škarvada <jskarvad@redhat.com> - 2:3.0.3-4
+- Increased alternatives priority, it is desirable to prefer postfix
+  to e.g. ssmtp
+  Resolves: rhbz#1255131
+
 * Mon Jan 11 2016 Jaroslav Škarvada <jskarvad@redhat.com> - 2:3.0.3-3
 - Added support for installation with _excludedocs
   Resolves: rhbz#1227824
