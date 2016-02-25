@@ -1,5 +1,5 @@
 diff --git a/conf/postfix-files b/conf/postfix-files
-index b259bca..778e13c 100644
+index a433f4f..3ecdb5b 100644
 --- a/conf/postfix-files
 +++ b/conf/postfix-files
 @@ -83,7 +83,6 @@ $shlib_directory/${LIB_PREFIX}sqlite${LIB_SUFFIX}:f:root:-:755
@@ -10,7 +10,7 @@ index b259bca..778e13c 100644
  $meta_directory/master.cf.proto:f:root:-:644
  $meta_directory/postfix-files.d:d:root:-:755
  $meta_directory/postfix-files:f:root:-:644
-@@ -139,18 +138,13 @@ $command_directory/postqueue:f:root:$setgid_group:2755:u
+@@ -140,18 +139,13 @@ $command_directory/postqueue:f:root:$setgid_group:2755:u
  $sendmail_path:f:root:-:755
  $newaliases_path:l:$sendmail_path
  $mailq_path:l:$sendmail_path
@@ -29,7 +29,7 @@ index b259bca..778e13c 100644
  $config_directory/main.cf:f:root:-:644:p
  $config_directory/master.cf:f:root:-:644:p
  $config_directory/pcre_table:f:root:-:644:o
-@@ -163,8 +157,8 @@ $config_directory/postfix-script:f:root:-:755:o
+@@ -164,8 +158,8 @@ $config_directory/postfix-script:f:root:-:755:o
  $config_directory/postfix-script-sgid:f:root:-:755:o
  $config_directory/postfix-script-nosgid:f:root:-:755:o
  $config_directory/post-install:f:root:-:755:o
@@ -40,7 +40,7 @@ index b259bca..778e13c 100644
  $manpage_directory/man1/postalias.1:f:root:-:644
  $manpage_directory/man1/postcat.1:f:root:-:644
  $manpage_directory/man1/postconf.1:f:root:-:644
-@@ -177,9 +171,9 @@ $manpage_directory/man1/postmap.1:f:root:-:644
+@@ -179,9 +173,9 @@ $manpage_directory/man1/postmap.1:f:root:-:644
  $manpage_directory/man1/postmulti.1:f:root:-:644
  $manpage_directory/man1/postqueue.1:f:root:-:644
  $manpage_directory/man1/postsuper.1:f:root:-:644
@@ -52,7 +52,7 @@ index b259bca..778e13c 100644
  $manpage_directory/man5/body_checks.5:f:root:-:644
  $manpage_directory/man5/bounce.5:f:root:-:644
  $manpage_directory/man5/canonical.5:f:root:-:644
-@@ -226,7 +220,7 @@ $manpage_directory/man8/qmqpd.8:f:root:-:644
+@@ -228,7 +222,7 @@ $manpage_directory/man8/qmqpd.8:f:root:-:644
  $manpage_directory/man8/scache.8:f:root:-:644
  $manpage_directory/man8/showq.8:f:root:-:644
  $manpage_directory/man8/smtp.8:f:root:-:644

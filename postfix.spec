@@ -41,7 +41,7 @@
 
 Name: postfix
 Summary: Postfix Mail Transport Agent
-Version: 3.0.4
+Version: 3.1.0
 Release: 1%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
@@ -82,9 +82,9 @@ Source101: postfix-pam.conf
 # Patches
 
 Patch1: postfix-3.0.0-config.patch
-Patch2: postfix-3.0.0-files.patch
-Patch3: postfix-3.0.2-alternatives.patch
-Patch4: postfix-3.0.0-large-fs.patch
+Patch2: postfix-3.1.0-files.patch
+Patch3: postfix-3.1.0-alternatives.patch
+Patch4: postfix-3.1.0-large-fs.patch
 Patch9: pflogsumm-1.1.3-datecalc.patch
 
 # Optional patches - set the appropriate environment variables to include
@@ -633,6 +633,7 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755, root, root) %{postfix_daemon_dir}/post-install
 %attr(0644, root, root) %{postfix_config_dir}/postfix-files
 %attr(0755, root, root) %{postfix_daemon_dir}/postfix-script
+%attr(0755, root, root) %{postfix_daemon_dir}/postfix-tls-script
 %attr(0755, root, root) %{postfix_daemon_dir}/postfix-wrapper
 %attr(0755, root, root) %{postfix_daemon_dir}/postmulti-script
 %attr(0755, root, root) %{postfix_daemon_dir}/postscreen
@@ -731,6 +732,11 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Thu Feb 25 2016 Jaroslav Škarvada <jskarvad@redhat.com> - 2:3.1.0-1
+- New version
+  Resolves: rhbz#1311968
+- Defuzzified files, large-fs, and alternatives patches
+
 * Mon Feb 22 2016 Jaroslav Škarvada <jskarvad@redhat.com> - 2:3.0.4-1
 - New version
   Resolves: rhbz#1310481

@@ -1,8 +1,8 @@
 diff --git a/conf/post-install b/conf/post-install
-index d5db260..71e18cf 100644
+index 904cefa..5f1039b 100644
 --- a/conf/post-install
 +++ b/conf/post-install
-@@ -530,6 +530,17 @@ test -n "$create" && {
+@@ -532,6 +532,17 @@ test -n "$create" && {
  	    case $path in
  	    no|no/*) continue;;
  	    esac
