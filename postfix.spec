@@ -93,7 +93,7 @@ Patch9: pflogsumm-1.1.3-datecalc.patch
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 # Determine the different packages required for building postfix
-BuildRequires: libdb-devel, pkgconfig, zlib-devel
+BuildRequires: libdb-devel, perl-generators, pkgconfig, zlib-devel
 BuildRequires: systemd-units, libicu-devel
 
 %{?with_ldap:BuildRequires: openldap-devel}
