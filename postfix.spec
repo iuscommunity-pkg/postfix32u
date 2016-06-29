@@ -42,7 +42,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 3.1.1
-Release: 1%{?dist}
+Release: 2%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -732,6 +732,10 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Wed Jun 29 2016 Jaroslav Škarvada <jskarvad@redhat.com> - 2:3.1.1-2
+- Hardened systemd unit file
+  Resolves: rhbz#1350941
+
 * Mon May 16 2016 Jaroslav Škarvada <jskarvad@redhat.com> - 2:3.1.1-1
 - New version
   Resolves: rhbz#1336245
