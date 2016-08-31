@@ -41,8 +41,8 @@
 
 Name: postfix
 Summary: Postfix Mail Transport Agent
-Version: 3.1.1
-Release: 3%{?dist}
+Version: 3.1.2
+Release: 1%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -85,7 +85,6 @@ Patch1: postfix-3.0.0-config.patch
 Patch2: postfix-3.1.0-files.patch
 Patch3: postfix-3.1.0-alternatives.patch
 Patch4: postfix-3.1.0-large-fs.patch
-Patch5: postfix-3.1.1-timestamps.patch
 Patch9: pflogsumm-1.1.3-datecalc.patch
 
 # Optional patches - set the appropriate environment variables to include
@@ -210,7 +209,6 @@ maps with Postfix, you need this.
 %patch2 -p1 -b .files
 %patch3 -p1 -b .alternatives
 %patch4 -p1 -b .large-fs
-%patch5 -p1 -b .timestamps
 
 # Change DEF_SHLIB_DIR according to build host
 sed -i \
@@ -407,7 +405,7 @@ popd
 mkdir -p $RPM_BUILD_ROOT%{_var}/lib/misc
 touch $RPM_BUILD_ROOT%{_var}/lib/misc/postfix.aliasesdb-stamp
 
-# prepare alternatives ghosts 
+# prepare alternatives ghosts
 for i in %{postfix_command_dir}/sendmail %{_bindir}/{mailq,newaliases,rmail} \
 	%{_sysconfdir}/pam.d/smtp /usr/lib/sendmail \
 	%{_mandir}/{man1/{mailq.1,newaliases.1},man5/aliases.5,man8/{sendmail.8,smtpd.8}}
@@ -734,6 +732,12 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Wed Aug 31 2016 Jaroslav Škarvada <jskarvad@redhat.com> - 2:3.1.2-1
+- New version
+  Resolves: rhbz#1370899
+- Dropped timestamps patch (upstream rejected)
+- Fixed minor whitespace problem
+
 * Thu Aug 04 2016 Ondřej Lysoněk <olysonek@redhat.com> - 2:3.1.1-3
 - Preserve timestamps during 'make install'
   Patch provided by Robert Scheck
