@@ -42,7 +42,7 @@
 Name: postfix
 Summary: Postfix Mail Transport Agent
 Version: 3.1.3
-Release: 1%{?dist}
+Release: 2%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -86,6 +86,8 @@ Patch2: postfix-3.1.0-files.patch
 Patch3: postfix-3.1.0-alternatives.patch
 Patch4: postfix-3.1.0-large-fs.patch
 Patch9: pflogsumm-1.1.3-datecalc.patch
+# Upstream patch
+Patch10: postfix-3.1.3-timestamps.patch
 
 # Optional patches - set the appropriate environment variables to include
 #                    them when building the package/spec file
@@ -221,6 +223,7 @@ pushd pflogsumm-%{pflogsumm_ver}
 %patch9 -p1 -b .datecalc
 popd
 %endif
+%patch10 -p1 -b timestamps
 
 for f in README_FILES/TLS_{LEGACY_,}README TLS_ACKNOWLEDGEMENTS; do
 	iconv -f iso8859-1 -t utf8 -o ${f}{_,} &&
@@ -293,7 +296,8 @@ make -f Makefile.init makefiles shared=yes dynamicmaps=yes \
   AUXLIBS_MYSQL="${AUXLIBS_MYSQL}" AUXLIBS_PGSQL="${AUXLIBS_PGSQL}" \
   AUXLIBS_SQLITE="${AUXLIBS_SQLITE}" AUXLIBS_CDB="${AUXLIBS_CDB}"\
   DEBUG="" SHLIB_RPATH="-Wl,-rpath,%{postfix_shlib_dir} $LDFLAGS" \
-  OPT="$RPM_OPT_FLAGS -fno-strict-aliasing -Wno-comment"
+  OPT="$RPM_OPT_FLAGS -fno-strict-aliasing -Wno-comment" \
+  POSTFIX_INSTALL_OPTS=-keep-new-mtime
 
 make %{?_smp_mflags} 
 
@@ -732,6 +736,10 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Wed Oct 5 2016 Ondřej Lysoněk <olysonek@redhat.com> - 2:3.1.3-2
+- Preserve timestamps during 'make install'
+  Resolves: rhbz#1307064
+
 * Mon Oct  3 2016 Jaroslav Škarvada <jskarvad@redhat.com> - 2:3.1.3-1
 - New version
   Resolves: rhbz#1381077
