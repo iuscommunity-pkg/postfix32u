@@ -41,8 +41,8 @@
 
 Name: postfix
 Summary: Postfix Mail Transport Agent
-Version: 3.1.3
-Release: 2%{?dist}
+Version: 3.1.4
+Release: 1%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -736,6 +736,10 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Mon Jan  2 2017 Jaroslav Škarvada <jskarvad@redhat.com> - 2:3.1.4-1
+- New version
+  Resolves: rhbz#1409447
+
 * Wed Oct 5 2016 Ondřej Lysoněk <olysonek@redhat.com> - 2:3.1.3-2
 - Preserve timestamps during 'make install'
   Resolves: rhbz#1307064
