@@ -41,8 +41,8 @@
 
 Name: postfix
 Summary: Postfix Mail Transport Agent
-Version: 3.1.4
-Release: 2%{?dist}
+Version: 3.2.0
+Release: 1%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -81,13 +81,11 @@ Source101: postfix-pam.conf
 
 # Patches
 
-Patch1: postfix-3.0.0-config.patch
+Patch1: postfix-3.2.0-config.patch
 Patch2: postfix-3.1.0-files.patch
 Patch3: postfix-3.1.0-alternatives.patch
-Patch4: postfix-3.1.0-large-fs.patch
+Patch4: postfix-3.2.0-large-fs.patch
 Patch9: pflogsumm-1.1.3-datecalc.patch
-# Upstream patch
-Patch10: postfix-3.1.3-timestamps.patch
 
 # Optional patches - set the appropriate environment variables to include
 #                    them when building the package/spec file
@@ -223,7 +221,6 @@ pushd pflogsumm-%{pflogsumm_ver}
 %patch9 -p1 -b .datecalc
 popd
 %endif
-%patch10 -p1 -b timestamps
 
 for f in README_FILES/TLS_{LEGACY_,}README TLS_ACKNOWLEDGEMENTS; do
 	iconv -f iso8859-1 -t utf8 -o ${f}{_,} &&
@@ -297,7 +294,7 @@ make -f Makefile.init makefiles shared=yes dynamicmaps=yes \
   AUXLIBS_SQLITE="${AUXLIBS_SQLITE}" AUXLIBS_CDB="${AUXLIBS_CDB}"\
   DEBUG="" SHLIB_RPATH="-Wl,-rpath,%{postfix_shlib_dir} $LDFLAGS" \
   OPT="$RPM_OPT_FLAGS -fno-strict-aliasing -Wno-comment" \
-  POSTFIX_INSTALL_OPTS=-keep-new-mtime
+  POSTFIX_INSTALL_OPTS=-keep-build-mtime
 
 make %{?_smp_mflags} 
 
@@ -736,6 +733,12 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Thu Mar  2 2017 Jaroslav Škarvada <jskarvad@redhat.com> - 2:3.2.0-1
+- New version
+  Resolves: rhbz#1427860
+- De-fuzzified patches
+- Dropped timestamps patch (upstreamed)
+
 * Sat Feb 11 2017 Fedora Release Engineering <releng@fedoraproject.org> - 2:3.1.4-2
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_26_Mass_Rebuild
 

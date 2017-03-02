@@ -1,5 +1,5 @@
 diff --git a/conf/main.cf b/conf/main.cf
-index 1fc886b..c654dbd 100644
+index 7af8bde..fbe5c62 100644
 --- a/conf/main.cf
 +++ b/conf/main.cf
 @@ -132,6 +132,10 @@ mail_owner = postfix
@@ -85,10 +85,10 @@ index 1fc886b..c654dbd 100644
  readme_directory =
 -inet_protocols = ipv4
 diff --git a/conf/master.cf b/conf/master.cf
-index 1eda7b5..10ee56e 100644
+index b67ed59..a9633ba 100644
 --- a/conf/master.cf
 +++ b/conf/master.cf
-@@ -95,14 +95,14 @@ scache    unix  -       -       n       -       1       scache
+@@ -96,14 +96,14 @@ scache    unix  -       -       n       -       1       scache
  # Also specify in main.cf: cyrus_destination_recipient_limit=1
  #
  #cyrus     unix  -       n       n       -       -       pipe
