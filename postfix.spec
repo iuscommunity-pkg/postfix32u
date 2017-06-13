@@ -41,7 +41,7 @@
 
 Name: postfix
 Summary: Postfix Mail Transport Agent
-Version: 3.2.0
+Version: 3.2.1
 Release: 1%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
@@ -67,12 +67,10 @@ Source5: postfix-chroot-update
 
 # Sources 50-99 are upstream [patch] contributions
 
-%define pflogsumm_ver 1.1.3
+%define pflogsumm_ver 1.1.5
 
-%if %{with pflogsumm}
 # Postfix Log Entry Summarizer: http://jimsun.linxnet.com/postfix_contrib.html
 Source53: http://jimsun.linxnet.com/downloads/pflogsumm-%{pflogsumm_ver}.tar.gz
-%endif
 
 # Sources >= 100 are config files
 
@@ -85,7 +83,9 @@ Patch1: postfix-3.2.0-config.patch
 Patch2: postfix-3.1.0-files.patch
 Patch3: postfix-3.1.0-alternatives.patch
 Patch4: postfix-3.2.0-large-fs.patch
-Patch9: pflogsumm-1.1.3-datecalc.patch
+Patch9: pflogsumm-1.1.5-datecalc.patch
+# rhbz#1384871, sent upstream
+Patch10: pflogsumm-1.1.5-ipv6-warnings-fix.patch
 
 # Optional patches - set the appropriate environment variables to include
 #                    them when building the package/spec file
@@ -219,6 +219,7 @@ src/global/mail_params.h
 gzip -dc %{SOURCE53} | tar xf -
 pushd pflogsumm-%{pflogsumm_ver}
 %patch9 -p1 -b .datecalc
+%patch10 -p1 -b .ipv6-warnings-fix
 popd
 %endif
 
@@ -733,6 +734,13 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Tue Jun 13 2017 Jaroslav Škarvada <jskarvad@redhat.com> - 2:3.2.1-1
+- New version
+  Resolves: rhbz#1460474
+- Updated pflogsumm to 1.1.5
+- Fixed warnings if IPv6 addresses are in the log
+  Resolves: rhbz#1384871
+
 * Thu Mar  2 2017 Jaroslav Škarvada <jskarvad@redhat.com> - 2:3.2.0-1
 - New version
   Resolves: rhbz#1427860
