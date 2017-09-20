@@ -39,10 +39,10 @@
 %global __provides_exclude ^(%{_privatelibs})$
 %global __requires_exclude ^(%{_privatelibs})$
 
-Name: postfix
+Name: postfix32u
 Summary: Postfix Mail Transport Agent
 Version: 3.2.2
-Release: 3%{?dist}
+Release: 3.ius%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -58,7 +58,13 @@ Requires(postun): systemd
 Requires: diffutils
 Provides: MTA smtpd smtpdaemon server(smtp)
 
-Source0: ftp://ftp.porcupine.org/mirrors/postfix-release/official/%{name}-%{version}.tar.gz
+# IUS things
+Provides: postfix = %{epoch}:%{version}-%{release}
+Provides: postfix%{?_isa} = %{epoch}:%{version}-%{release}
+Conflicts: postfix < %{epoch}:%{version}-%{release}
+
+
+Source0: ftp://ftp.porcupine.org/mirrors/postfix-release/official/postfix-%{version}.tar.gz
 Source1: postfix-etc-init.d-postfix
 Source2: postfix.service
 Source3: README-Postfix-SASL-RedHat.txt
@@ -99,7 +105,7 @@ BuildRequires: systemd-units, libicu-devel
 %{?with_ldap:BuildRequires: openldap-devel}
 %{?with_sasl:BuildRequires: cyrus-sasl-devel}
 %{?with_pcre:BuildRequires: pcre-devel}
-%{?with_mysql:BuildRequires: mysql-devel}
+%{?with_mysql:BuildRequires: mysql-devel < 1:10.0.21}
 %{?with_pgsql:BuildRequires: postgresql-devel}
 %{?with_sqlite:BuildRequires: sqlite-devel}
 %{?with_cdb:BuildRequires: tinycdb-devel}
@@ -107,19 +113,6 @@ BuildRequires: systemd-units, libicu-devel
 
 %description
 Postfix is a Mail Transport Agent (MTA).
-
-%if 0%{?fedora} < 23
-%package sysvinit
-Summary: SysV initscript for postfix
-Group: System Environment/Daemons
-BuildArch: noarch
-Requires: %{name} = %{epoch}:%{version}-%{release}
-Requires(preun): chkconfig
-Requires(post): chkconfig
-
-%description sysvinit
-This package contains the SysV initscript.
-%endif
 
 %package perl-scripts
 Summary: Postfix utilities written in perl
@@ -129,8 +122,12 @@ Requires: %{name} = %{epoch}:%{version}-%{release}
 Obsoletes: postfix < 2:2.5.5-2
 %if %{with pflogsumm}
 Provides: postfix-pflogsumm = %{epoch}:%{version}-%{release}
-Obsoletes: postfix-pflogsumm < 2:2.5.5-2
 %endif
+# IUS things
+Provides: postfix-perl-scripts = %{epoch}:%{version}-%{release}
+Provides: postfix-perl-scripts%{?_isa} = %{epoch}:%{version}-%{release}
+Conflicts: postfix-perl-scripts < %{epoch}:%{version}-%{release}
+Conflicts: postfix-pflogsumm < %{epoch}:%{version}-%{release}
 %description perl-scripts
 This package contains perl scripts pflogsumm and qshape.
 
@@ -146,6 +143,10 @@ qshape prints Postfix queue domain and age distribution.
 %package mysql
 Summary: Postfix MySQL map support
 Requires: %{name} = %{epoch}:%{version}-%{release}
+# IUS things
+Provides: postfix-mysql = %{epoch}:%{version}-%{release}
+Provides: postfix-mysql%{?_isa} = %{epoch}:%{version}-%{release}
+Conflicts: postfix-mysql < %{epoch}:%{version}-%{release}
 
 %description mysql
 This provides support for MySQL maps in Postfix. If you plan to use MySQL
@@ -156,6 +157,10 @@ maps with Postfix, you need this.
 %package pgsql
 Summary: Postfix PostgreSQL map support
 Requires: %{name} = %{epoch}:%{version}-%{release}
+# IUS things
+Provides: postfix-pgsql = %{epoch}:%{version}-%{release}
+Provides: postfix-pgsql%{?_isa} = %{epoch}:%{version}-%{release}
+Conflicts: postfix-pgsql < %{epoch}:%{version}-%{release}
 
 %description pgsql
 This provides support for PostgreSQL  maps in Postfix. If you plan to use
@@ -166,6 +171,10 @@ PostgreSQL maps with Postfix, you need this.
 %package sqlite
 Summary: Postfix SQLite map support
 Requires: %{name} = %{epoch}:%{version}-%{release}
+# IUS things
+Provides: postfix-sqlite = %{epoch}:%{version}-%{release}
+Provides: postfix-sqlite%{?_isa} = %{epoch}:%{version}-%{release}
+Conflicts: postfix-sqlite < %{epoch}:%{version}-%{release}
 
 %description sqlite
 This provides support for SQLite maps in Postfix. If you plan to use SQLite
@@ -176,6 +185,10 @@ maps with Postfix, you need this.
 %package cdb
 Summary: Postfix CDB map support
 Requires: %{name} = %{epoch}:%{version}-%{release}
+# IUS things
+Provides: postfix-cdb = %{epoch}:%{version}-%{release}
+Provides: postfix-cdb%{?_isa} = %{epoch}:%{version}-%{release}
+Conflicts: postfix-cdb < %{epoch}:%{version}-%{release}
 
 %description cdb
 This provides support for CDB maps in Postfix. If you plan to use CDB
@@ -186,6 +199,10 @@ maps with Postfix, you need this.
 %package ldap
 Summary: Postfix LDAP map support
 Requires: %{name} = %{epoch}:%{version}-%{release}
+# IUS things
+Provides: postfix-ldap = %{epoch}:%{version}-%{release}
+Provides: postfix-ldap%{?_isa} = %{epoch}:%{version}-%{release}
+Conflicts: postfix-ldap < %{epoch}:%{version}-%{release}
 
 %description ldap
 This provides support for LDAP maps in Postfix. If you plan to use LDAP
@@ -196,6 +213,10 @@ maps with Postfix, you need this.
 %package pcre
 Summary: Postfix PCRE map support
 Requires: %{name} = %{epoch}:%{version}-%{release}
+# IUS things
+Provides: postfix-pcre = %{epoch}:%{version}-%{release}
+Provides: postfix-pcre%{?_isa} = %{epoch}:%{version}-%{release}
+Conflicts: postfix-pcre < %{epoch}:%{version}-%{release}
 
 %description pcre
 This provides support for PCRE maps in Postfix. If you plan to use PCRE
@@ -203,7 +224,7 @@ maps with Postfix, you need this.
 %endif
 
 %prep
-%setup -q
+%setup -q -n postfix-%{version}
 # Apply obligatory patches
 %patch1 -p1 -b .config
 %patch2 -p1 -b .files
@@ -297,7 +318,7 @@ make -f Makefile.init makefiles shared=yes dynamicmaps=yes \
   OPT="$RPM_OPT_FLAGS -fno-strict-aliasing -Wno-comment" \
   POSTFIX_INSTALL_OPTS=-keep-build-mtime
 
-make %{?_smp_mflags} 
+make %{?_smp_mflags}
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -330,13 +351,6 @@ make non-interactive-package \
        sample_directory=%{postfix_sample_dir} \
        readme_directory=%{postfix_readme_dir} || exit 1
 
-%if 0%{?fedora} < 23
-# This installs into the /etc/rc.d/init.d directory
-mkdir -p $RPM_BUILD_ROOT%{_initrddir}
-install -c %{SOURCE1} $RPM_BUILD_ROOT%{_initrddir}/postfix
-%endif
-
-# Systemd
 mkdir -p %{buildroot}%{_unitdir}
 install -m 644 %{SOURCE2} %{buildroot}%{_unitdir}
 install -m 755 %{SOURCE4} %{buildroot}%{postfix_daemon_dir}/aliasesdb
@@ -502,23 +516,6 @@ exit 0
 %postun
 %systemd_postun_with_restart %{name}.service
 
-%if 0%{?fedora} < 23
-%post sysvinit
-/sbin/chkconfig --add postfix >/dev/null 2>&1 ||:
-
-%preun sysvinit
-if [ "$1" = 0 ]; then
-    %{_initrddir}/postfix stop >/dev/null 2>&1 ||:
-    /sbin/chkconfig --del postfix >/dev/null 2>&1 ||:
-fi
-
-%postun sysvinit
-[ "$1" -ge 1 ] && %{_initrddir}/postfix condrestart >/dev/null 2>&1 ||:
-
-%triggerpostun -n postfix-sysvinit -- postfix < %{sysv2systemdnvr}
-/sbin/chkconfig --add postfix >/dev/null 2>&1 || :
-%endif
-
 %triggerun -- postfix < %{sysv2systemdnvr}
 %{_bindir}/systemd-sysv-convert --save postfix >/dev/null 2>&1 ||:
 %{_bindir}/systemd-sysv-convert --apply postfix >/dev/null 2>&1 ||:
@@ -663,12 +660,6 @@ rm -rf $RPM_BUILD_ROOT
 
 %ghost %attr(0644, root, root) %{_var}/lib/misc/postfix.aliasesdb-stamp
 
-%if 0%{?fedora} < 23
-%files sysvinit
-%defattr(-, root, root, -)
-%{_initrddir}/postfix
-%endif
-
 %files perl-scripts
 %defattr(-, root, root, -)
 %attr(0755, root, root) %{postfix_command_dir}/qshape
@@ -734,6 +725,10 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Wed Sep 20 2017 Ben Harper <ben.harper@rackspace.com> - 2:3.2.2-3.ius
+- initial IUS port
+- remove sysvinit bits
+
 * Thu Aug 03 2017 Fedora Release Engineering <releng@fedoraproject.org> - 2:3.2.2-3
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_27_Binutils_Mass_Rebuild
 
