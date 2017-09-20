@@ -1,2 +1,6 @@
-pflogsumm-*.tar.gz
-postfix-*.tar.gz
+BUILD
+BUILDROOT
+MOCK
+RPMS
+SOURCES/*.tar.gz
+SRPMS
