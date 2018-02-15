@@ -1,3 +1,6 @@
+# plugins have unresolvable symbols in compile time
+%undefine _strict_symbol_defs_build
+
 %bcond_without mysql
 %bcond_without pgsql
 %bcond_without sqlite
@@ -41,8 +44,8 @@
 
 Name: postfix32u
 Summary: Postfix Mail Transport Agent
-Version: 3.2.2
-Release: 3.ius%{?dist}
+Version: 3.2.5
+Release: 1.ius%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -95,8 +98,6 @@ Patch10: pflogsumm-1.1.5-ipv6-warnings-fix.patch
 
 # Optional patches - set the appropriate environment variables to include
 #                    them when building the package/spec file
-
-BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 # Determine the different packages required for building postfix
 BuildRequires: libdb-devel, perl-generators, pkgconfig, zlib-devel
@@ -522,12 +523,6 @@ exit 0
 /sbin/chkconfig --del postfix >/dev/null 2>&1 || :
 /bin/systemctl try-restart postfix.service >/dev/null 2>&1 || :
 
-
-
-%clean
-rm -rf $RPM_BUILD_ROOT
-
-
 %files
 
 # For correct directory permissions check postfix-install script.
@@ -725,6 +720,14 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 
 %changelog
+* Wed Feb 14 2018 Ben Harper <ben.harper@rackspace.com> - 2:3.2.5-1.ius
+- Latest upstream
+- do not check symbols during compilation from Fedora:
+  https://src.fedoraproject.org/rpms/postfix/c/6e98588922cdfdcf36a6b1aae058e888561c3da8
+- remove old EL5 stuff from Fedora:
+  https://src.fedoraproject.org/rpms/postfix/c/8f32f49e024d88730af00319ee11fa2720515756
+  https://src.fedoraproject.org/rpms/postfix/c/3db7e7ff40f8c5f51ef4abe8ca72467b128002fe
+
 * Wed Sep 20 2017 Ben Harper <ben.harper@rackspace.com> - 2:3.2.2-3.ius
 - initial IUS port
 - remove sysvinit bits
