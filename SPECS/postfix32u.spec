@@ -45,7 +45,7 @@
 Name: postfix32u
 Summary: Postfix Mail Transport Agent
 Version: 3.2.5
-Release: 1.ius%{?dist}
+Release: 2.ius%{?dist}
 Epoch: 2
 Group: System Environment/Daemons
 URL: http://www.postfix.org
@@ -453,7 +453,7 @@ done
 popd
 
 %post -e
-%systemd_post %{name}.service
+%systemd_post postfix.service
 
 # upgrade configuration files if necessary
 %{_sbindir}/postfix set-permissions upgrade-configuration \
@@ -507,7 +507,7 @@ fi
 exit 0
 
 %preun
-%systemd_preun %{name}.service
+%systemd_preun postfix.service
 
 if [ "$1" = 0 ]; then
     %{_sbindir}/alternatives --remove mta %{postfix_command_dir}/sendmail.postfix
@@ -515,7 +515,7 @@ fi
 exit 0
 
 %postun
-%systemd_postun_with_restart %{name}.service
+%systemd_postun_with_restart postfix.service
 
 %triggerun -- postfix < %{sysv2systemdnvr}
 %{_bindir}/systemd-sysv-convert --save postfix >/dev/null 2>&1 ||:
@@ -720,6 +720,9 @@ exit 0
 %endif
 
 %changelog
+* Thu Apr 12 2018 Carl George <carl@george.computer> - 2:3.2.5-2.ius
+- Use correct systemd service name in scriptlets
+
 * Wed Feb 14 2018 Ben Harper <ben.harper@rackspace.com> - 2:3.2.5-1.ius
 - Latest upstream
 - do not check symbols during compilation from Fedora:
