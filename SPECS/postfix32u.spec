@@ -1,6 +1,3 @@
-# plugins have unresolvable symbols in compile time
-%undefine _strict_symbol_defs_build
-
 %bcond_without mysql
 %bcond_without pgsql
 %bcond_without sqlite
@@ -11,8 +8,6 @@
 %bcond_without tls
 %bcond_without ipv6
 %bcond_without pflogsumm
-
-%global sysv2systemdnvr 2.8.12-2
 
 # hardened build if not overrided
 %{!?_hardened_build:%global _hardened_build 1}
@@ -322,11 +317,6 @@ make -f Makefile.init makefiles shared=yes dynamicmaps=yes \
 make %{?_smp_mflags}
 
 %install
-rm -rf $RPM_BUILD_ROOT
-mkdir -p $RPM_BUILD_ROOT
-
-# install postfix into $RPM_BUILD_ROOT
-
 # Move stuff around so we don't conflict with sendmail
 for i in man1/mailq.1 man1/newaliases.1 man1/sendmail.1 man5/aliases.5 man8/smtpd.8; do
   dest=$(echo $i | sed 's|\.[1-9]$|.postfix\0|')
@@ -517,19 +507,11 @@ exit 0
 %postun
 %systemd_postun_with_restart postfix.service
 
-%triggerun -- postfix < %{sysv2systemdnvr}
-%{_bindir}/systemd-sysv-convert --save postfix >/dev/null 2>&1 ||:
-%{_bindir}/systemd-sysv-convert --apply postfix >/dev/null 2>&1 ||:
-/sbin/chkconfig --del postfix >/dev/null 2>&1 || :
-/bin/systemctl try-restart postfix.service >/dev/null 2>&1 || :
-
 %files
 
 # For correct directory permissions check postfix-install script.
 # It reads the file postfix-files which defines the ownership
 # and permissions for all files postfix installs.
-
-%defattr(-, root, root, -)
 
 # Config files not part of upstream
 
