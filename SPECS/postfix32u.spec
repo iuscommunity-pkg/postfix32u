@@ -564,6 +564,7 @@ exit 0
 %dir %attr(0755, root, root) %{postfix_config_dir}
 %dir %attr(0755, root, root) %{postfix_daemon_dir}
 %dir %attr(0755, root, root) %{postfix_queue_dir}
+%dir %attr(0755, root, root) %{postfix_shlib_dir}
 %dir %attr(0700, %{postfix_user}, root) %{postfix_queue_dir}/active
 %dir %attr(0700, %{postfix_user}, root) %{postfix_queue_dir}/bounce
 %dir %attr(0700, %{postfix_user}, root) %{postfix_queue_dir}/corrupt
@@ -722,6 +723,7 @@ exit 0
 %changelog
 * Thu Apr 12 2018 Carl George <carl@george.computer> - 2:3.2.5-2.ius
 - Use correct systemd service name in scriptlets
+- Owned /usr/lib64/postfix directory (Fedora)
 
 * Wed Feb 14 2018 Ben Harper <ben.harper@rackspace.com> - 2:3.2.5-1.ius
 - Latest upstream
